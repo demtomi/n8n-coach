@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export type RagResult = {
   id: string;
@@ -10,11 +10,17 @@ export type RagResult = {
   similarity: number;
 };
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-);
+let _supabase: SupabaseClient | null = null;
+function supabase(): SupabaseClient {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
+    );
+  }
+  return _supabase;
+}
 
 async function embedQuery(text: string): Promise<number[]> {
   const res = await fetch("https://api.voyageai.com/v1/embeddings", {
@@ -38,7 +44,7 @@ async function embedQuery(text: string): Promise<number[]> {
 
 export async function retrieve(query: string, topK = 5): Promise<RagResult[]> {
   const embedding = await embedQuery(query);
-  const { data, error } = await supabase.rpc("coach_match_documents", {
+  const { data, error } = await supabase().rpc("coach_match_documents", {
     query_embedding: embedding,
     match_count: topK,
   });

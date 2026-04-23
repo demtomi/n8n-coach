@@ -1,11 +1,17 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-);
+let _supabase: SupabaseClient | null = null;
+function supabase(): SupabaseClient {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
+    );
+  }
+  return _supabase;
+}
 
 export function ipHashFromRequest(req: Request): string {
   const xff = req.headers.get("x-forwarded-for");
@@ -24,7 +30,7 @@ export async function checkRateLimit(req: Request): Promise<RateLimitResult> {
   }
 
   const ipHash = ipHashFromRequest(req);
-  const { data, error } = await supabase.rpc("coach_check_rate_limit", {
+  const { data, error } = await supabase().rpc("coach_check_rate_limit", {
     p_ip_hash: ipHash,
   });
 
