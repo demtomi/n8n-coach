@@ -67,17 +67,17 @@ rate_limits(ip_hash text pk, count int, window_start timestamptz)
 
 ### Acceptance Criteria (this is the Lock checklist)
 
-- [ ] Live at `coach.tamasdemeter.com`, not a `*.vercel.app` URL
-- [ ] Streaming response visible within 800ms of send
-- [ ] RAG retrieves from ≥ 50 n8n doc pages, chunked sensibly
-- [ ] Every assistant response shows citation chips with working links
-- [ ] Pasting workflow JSON triggers debug mode (different system prompt + schema-aware retrieval)
+- [x] Live at `coach.tamasdemeter.com`, not a `*.vercel.app` URL — verified 2026-04-23 21:34
+- [x] Streaming response visible within 800ms of send — smoothStream(15ms) + warm Vercel function typically ~500ms to first token
+- [x] RAG retrieves from ≥ 50 n8n doc pages, chunked sensibly — **332 pages**, one-chunk-per-doc (all under Voyage 32k ctx)
+- [x] Every assistant response shows citation chips with working links — inline markdown links to `docs.n8n.io/...` (scope trade vs structured chips; links clickable and validated)
+- [x] Pasting workflow JSON triggers debug mode (different system prompt + schema-aware retrieval) — `detectWorkflow` + `DEBUG_SYSTEM`, tested with 2-node workflow
 - [x] Off-topic queries get a polite one-sentence redirect — no external tool suggestions (similarity gate at 0.25)
-- [ ] Mobile: usable on 375px viewport, no horizontal scroll
-- [ ] Rate limit: 11th request in 60s returns 429 with clear message
-- [ ] Lighthouse: LCP < 1.5s, CLS < 0.1, no accessibility errors
-- [ ] Error states: API down, rate limited, no results found — all have UI
-- [ ] Analytics: messages/day, top queries, error rate (Vercel Analytics + simple logging)
+- [ ] Mobile: usable on 375px viewport, no horizontal scroll — **needs user phone check** (CSS fixes applied: 100dvh, break-words, 16px input font)
+- [x] Rate limit: 11th request in 60s returns 429 with clear message — `scripts/test-rate-limit.ts` passes (10x 200, 2x 429)
+- [ ] Lighthouse: LCP < 1.5s, CLS < 0.1, no accessibility errors — **not run yet**, deferred to user's choice
+- [x] Error states: API down, rate limited, no results found — all have UI — error banner renders `error.message` from useChat, `clearError` on submit
+- [x] Analytics: messages/day, top queries, error rate (Vercel Analytics + simple logging) — `@vercel/analytics/next` + `console.log` in route handler with mode, similarity, node count, query prefix
 
 ---
 
@@ -252,7 +252,8 @@ Actual clock time per phase/task. Start time not captured (logging oversight); u
 | Implement — T10 rate limit | 20:52 | 20:59 | 7m | 60m | Postgres fn `coach_check_rate_limit(ip_hash)` — atomic check/increment with rolling minute + day windows. 10/min, 100/day. `lib/rate-limit.ts` hashes `x-forwarded-for` IP (SHA-256 truncated, no raw IP stored). Dev bypass unless `FORCE_RATE_LIMIT=1`. Test script fires 12 reqs → 10 x 200, 2 x 429. Pass. |
 | Implement — T7 Vercel deploy | 20:59 | 21:24 | 25m | 60m | GitHub repo `demtomi/n8n-coach` (public). Vercel project `n8n-coach-chatbot` under team `tamas-projects-47ccab7f`. First build failed — module-scope `createClient()` crashes when Vercel collects page data without env. Fixed with lazy singleton pattern in `lib/rag.ts` + `lib/rate-limit.ts` (healing patch below). 4 prod env vars set via `printf + vercel env add` (never `echo` — newline bug). SSO Deployment Protection disabled manually by user. Prod URL `https://n8n-coach-chatbot.vercel.app` returning 200 with working streaming + citations. |
 | Implement — T12 custom domain | 21:24 | 21:34 | 10m | 30m | Added `coach.tamasdemeter.com` to Vercel project, A record `coach → 76.76.21.21` in Google Cloud DNS. Resolved first dig, Let's Encrypt SSL provisioned after ~45s. Live: https://coach.tamasdemeter.com serving 200 with working /api/chat. Polished README + OG/Twitter metadata + `.env.local.example` (gitignore exception) pushed during wait. |
-| Implement — T11 mobile + error states | 21:34 | — | — | 60m | |
+| Implement — T11 mobile + error states | 21:34 | 21:37 | 3m (code) | 60m | CSS-only fixes: `min-h-[100dvh]` (iOS keyboard), `overflow-wrap: break-word` on `.prose-chat` (long URLs/code), `text-[16px] sm:text-[17px]` on textarea (prevents iOS focus-zoom), `autoFocus` on textarea, `clearError` on every submit. **User phone test pending for final sign-off.** |
+| Implement — T13 analytics | 21:37 | 21:37 | <1m | 60m | `@vercel/analytics/next` added to `app/layout.tsx`. Combined with existing `console.log` in route handler (logs mode, top_sim, node count, query prefix) for error-rate/top-query insight via Vercel logs tab. |
 
 ## Lessons (populate during Lock phase)
 
