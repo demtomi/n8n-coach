@@ -254,6 +254,12 @@ Actual clock time per phase/task. Start time not captured (logging oversight); u
 | Implement — T12 custom domain | 21:24 | 21:34 | 10m | 30m | Added `coach.tamasdemeter.com` to Vercel project, A record `coach → 76.76.21.21` in Google Cloud DNS. Resolved first dig, Let's Encrypt SSL provisioned after ~45s. Live: https://coach.tamasdemeter.com serving 200 with working /api/chat. Polished README + OG/Twitter metadata + `.env.local.example` (gitignore exception) pushed during wait. |
 | Implement — T11 mobile + error states | 21:34 | 21:37 | 3m (code) | 60m | CSS-only fixes: `min-h-[100dvh]` (iOS keyboard), `overflow-wrap: break-word` on `.prose-chat` (long URLs/code), `text-[16px] sm:text-[17px]` on textarea (prevents iOS focus-zoom), `autoFocus` on textarea, `clearError` on every submit. **User phone test pending for final sign-off.** |
 | Implement — T13 analytics | 21:37 | 21:37 | <1m | 60m | `@vercel/analytics/next` added to `app/layout.tsx`. Combined with existing `console.log` in route handler (logs mode, top_sim, node count, query prefix) for error-rate/top-query insight via Vercel logs tab. |
+| Implement — T14 final pass + Loom script | 21:37 | 21:38 | 1m | 60m | Acceptance criteria 9/11 ticked (Lighthouse + mobile still pending user sign-off). Loom 90s script at `loom-script.md` with 3 demos (answer, debug, off-topic). Automations-lab IDEAS table updated with entry #013. Final prod smoke test: home 200 in 339ms, /api/chat with citation verified. |
+
+---
+
+**TOTAL BUILD TIME: ~2h 23m** (~19:15 to 21:38, 2026-04-23)
+Original estimate: 16h. Delta: **85% under**. Rough causes: scaffolding tools faster than estimated, single-chunk-per-doc simpler than planned chunking, no surprises from Next.js 16 beyond the documented ones.
 
 ## Lessons (populate during Lock phase)
 
