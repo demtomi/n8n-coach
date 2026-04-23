@@ -41,6 +41,7 @@ export default function Home() {
   const submit = (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || status === "streaming" || status === "submitted") return;
+    clearError();
     sendMessage({ text: trimmed });
     setInput("");
   };
@@ -49,7 +50,7 @@ export default function Home() {
   const isWorking = status === "streaming" || status === "submitted";
 
   return (
-    <div className="min-h-screen flex flex-col bg-bg text-text">
+    <div className="min-h-[100dvh] flex flex-col bg-bg text-text">
       <header className="border-b border-border px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-baseline justify-between gap-3">
           <button
@@ -133,8 +134,9 @@ export default function Home() {
               }
             }}
             rows={1}
+            autoFocus
             placeholder="Ask about a node, paste a workflow JSON to debug, describe a bug…"
-            className="flex-1 resize-none bg-bg-elevated border border-border rounded-lg px-4 py-3 text-[17px] leading-relaxed focus:outline-none focus:border-accent max-h-48"
+            className="flex-1 resize-none bg-bg-elevated border border-border rounded-lg px-4 py-3 text-[16px] sm:text-[17px] leading-relaxed focus:outline-none focus:border-accent max-h-48"
           />
           <button
             type="submit"

@@ -35,6 +35,8 @@ body {
 .prose-chat {
   font-size: 17px;
   line-height: 1.65;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .prose-chat p {
   margin: 0 0 0.9em 0;
