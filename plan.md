@@ -250,6 +250,8 @@ Actual clock time per phase/task. Start time not captured (logging oversight); u
 | Polish — off-topic guardrail | 20:42 | 20:50 | 8m | ad-hoc | Similarity gate at 0.25 + `REDIRECT_SYSTEM` prompt + tightened `BASE_SYSTEM` (ban external tool suggestions). Tested: "exchange rate" → single-sentence redirect. Lesson logged. |
 | Implement — T9 debug mode | 20:50 | 20:52 | 2m | 120m | `lib/debug-mode.ts` detects parseable JSON with `nodes[]` key, extracts, feeds to `DEBUG_SYSTEM` prompt with JSON wrapped in `<workflow>` data tags (prompt-injection guard). Semantic query stripped of JSON for RAG. Test: 2-node webhook → email workflow → identified 3 real issues with cited fixes. UI placeholder hints at paste. **User confirmed working in browser.** |
 | Implement — T10 rate limit | 20:52 | 20:59 | 7m | 60m | Postgres fn `coach_check_rate_limit(ip_hash)` — atomic check/increment with rolling minute + day windows. 10/min, 100/day. `lib/rate-limit.ts` hashes `x-forwarded-for` IP (SHA-256 truncated, no raw IP stored). Dev bypass unless `FORCE_RATE_LIMIT=1`. Test script fires 12 reqs → 10 x 200, 2 x 429. Pass. |
+| Implement — T7 Vercel deploy | 20:59 | 21:24 | 25m | 60m | GitHub repo `demtomi/n8n-coach` (public). Vercel project `n8n-coach-chatbot` under team `tamas-projects-47ccab7f`. First build failed — module-scope `createClient()` crashes when Vercel collects page data without env. Fixed with lazy singleton pattern in `lib/rag.ts` + `lib/rate-limit.ts` (healing patch below). 4 prod env vars set via `printf + vercel env add` (never `echo` — newline bug). SSO Deployment Protection disabled manually by user. Prod URL `https://n8n-coach-chatbot.vercel.app` returning 200 with working streaming + citations. |
+| Implement — T12 custom domain | 21:24 | — | — | 30m | |
 
 ## Lessons (populate during Lock phase)
 
@@ -262,6 +264,18 @@ ROOT CAUSE: unclear requirements — plan didn't specify off-topic behavior; sys
 FIX: (1) Added similarity gate: if top-1 RAG result < 0.25, switch to a strict REDIRECT_SYSTEM prompt that forces a one-sentence decline + invite. (2) Strengthened BASE_SYSTEM: explicit ban on external tools/sites; instruction to answer only the n8n portion of mixed questions.
 RULE: When building a RAG chatbot, always add a similarity gate in addition to a system prompt. The prompt handles tone; the gate handles scope. Tune threshold with a 5-query probe (off-topic vs on-topic) before shipping. 0.25 worked here with voyage-3.
 ```
+
+### 2026-04-23 — Module-scope env access breaks Vercel build
+
+```
+WHAT BROKE: First Vercel deploy failed at "collect page data" step with cryptic error — route.js:6:3 Failed to collect.
+WHERE: lib/rag.ts and lib/rate-limit.ts created Supabase clients at module scope using process.env.SUPABASE_URL!
+ROOT CAUSE: Vercel imports API route modules during build to analyze them. Module-scope side effects run with undefined env vars (env only injects at runtime). createClient(undefined, undefined) threw.
+FIX: Lazy singleton pattern — defer createClient() call to first function invocation. Module loads cleanly without env.
+RULE: In Next.js API routes, never read env vars or initialize SDK clients at module scope. Always lazy-init on first call. Applies to any SDK client: Supabase, Stripe, Prisma, etc.
+```
+
+---
 
 Threshold calibration data (voyage-3, cosine similarity, n8n corpus):
 - Off-topic (pizza, forex): 0.20–0.22

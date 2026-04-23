@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# n8n Workflow Coach
 
-## Getting Started
+A chatbot that answers n8n questions and debugs pasted workflow JSON, grounded in the official n8n documentation.
 
-First, run the development server:
+**Live:** [coach.tamasdemeter.com](https://coach.tamasdemeter.com)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Built as a portfolio piece by [Tamas Demeter](https://tamasdemeter.com) over a weekend.
+
+## What it does
+
+- **Answer mode** — Ask any n8n question. Gets an answer with inline citations linking back to `docs.n8n.io`.
+- **Debug mode** — Paste an n8n workflow JSON. Gets a structured diagnosis: what it does, what's broken, which node, why it breaks (citing docs), exact fix.
+- **Off-topic guardrail** — Ask it "what's the weather in Budapest" and it declines in one sentence rather than hallucinating. Similarity gate keeps it locked to the n8n world.
+
+## Stack
+
+- **Framework** — Next.js 16 (App Router), React 19, Tailwind 4, TypeScript
+- **LLM** — Claude Sonnet 4.6 via Vercel AI SDK v6 + `@ai-sdk/anthropic`
+- **Embeddings** — Voyage `voyage-3` (1024-dim)
+- **Vector store** — Supabase pgvector with HNSW index
+- **Corpus** — 332 pages from `n8n-io/n8n-docs` (core-nodes, cluster-nodes, trigger-nodes, workflows, code)
+- **Hosting** — Vercel
+
+## Architecture
+
+```
+User query
+  │
+  ▼
+┌─────────────────────────────────────┐
+│ Extract workflow JSON (if pasted)   │  → Debug mode flag
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ Embed query (Voyage voyage-3)       │
+│ Cosine similarity in Supabase       │
+│ Top-5 matching docs                 │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ Route                               │
+│  • Debug mode → DEBUG_SYSTEM prompt │
+│  • On-topic (sim ≥ 0.25) → BASE     │
+│  • Off-topic (sim < 0.25) → REDIRECT│
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ streamText(Claude Sonnet 4.6)       │
+│ + smoothStream(word, 15ms)          │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+        SSE stream
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How it was built
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The full build plan, time log, and healing patches live in [`plan.md`](./plan.md). Built in a single weekend sitting using the B.U.I.L.D. framework.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Run locally
 
-## Learn More
+```bash
+git clone https://github.com/demtomi/n8n-coach.git
+cd n8n-coach
+npm install
+cp .env.local.example .env.local  # fill in 4 keys
+npx tsx scripts/build-corpus.ts   # builds corpus.json from n8n-docs
+npx tsx scripts/embed-corpus.ts   # embeds + upserts to Supabase
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Required env vars
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+ANTHROPIC_API_KEY=
+VOYAGE_API_KEY=
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Supabase setup
 
-## Deploy on Vercel
+Apply the two migrations (see `plan.md` § T3 and T10):
+1. `coach_chatbot_v1_tables` — tables + pgvector + `coach_match_documents` RPC
+2. `coach_rate_limit_fn` — rate-limiting Postgres function
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Code: MIT. n8n documentation content is owned by the n8n team (see [n8n-docs license](https://github.com/n8n-io/n8n-docs)).
