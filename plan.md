@@ -238,7 +238,7 @@ Actual clock time per phase/task. Start time not captured (logging oversight); u
 
 | Phase / Task | Start | End | Duration | Est | Notes |
 |---|---|---|---|---|---|
-| Unlock | ~19:15 (est) | 19:48 | ~33m | 60m | All 8 checks completed; 2 blockers resolved by user (Voyage key, git email decision) |
+| Unlock | 19:30 | 19:48 | 18m | 60m | All 8 checks completed; 2 blockers resolved by user (Voyage key, git email decision) |
 | Implement — T1 scaffold | 19:48 | 19:55 | 7m | 60m | Next.js 16.2.4 + React 19.2.4 + Tailwind 4 + TS. Installed `ai@6`, `@ai-sdk/anthropic@3`, `@supabase/supabase-js@2`. Local git repo with `dev@tamasdemeter.com`. `.env.local` seeded from root `.env`. Build verified. Way under estimate — scaffold tools are fast. |
 | Implement — T2 corpus build | 19:55 | 19:58 | 3m | 60m | 332 entries, 824 KB, avg 2.5 KB/entry, max 17.7k chars. Single-chunk-per-doc strategy (all under Voyage 32k ctx). Script at `scripts/build-corpus.ts`, output `data/corpus.json`. |
 | Implement — T3 embed + Supabase | 19:58 | 20:29 | 31m | 60m | Migration `coach_chatbot_v1_tables` applied: pgvector + 4 `coach_*` tables + HNSW index + `coach_match_documents` RPC. Embedded 332 entries in 2 passes (first blocked by free-tier 429, resolved via user adding payment method — retained 8 successful embeds via resumable script). Final cost: $0.02 on voyage-3. |
@@ -258,8 +258,52 @@ Actual clock time per phase/task. Start time not captured (logging oversight); u
 
 ---
 
-**TOTAL BUILD TIME: ~2h 23m** (~19:15 to 21:38, 2026-04-23)
-Original estimate: 16h. Delta: **85% under**. Rough causes: scaffolding tools faster than estimated, single-chunk-per-doc simpler than planned chunking, no surprises from Next.js 16 beyond the documented ones.
+**TOTAL BUILD TIME: 2h 11m** (19:30 → 21:41, 2026-04-23).
+Original estimate: **16h**. Actual: **131 min**. **86% under estimate.**
+
+## Estimate vs actual (by task)
+
+| Phase / task | Est | Actual | Delta | Notes on delta |
+|---|---|---|---|---|
+| Unlock | 60m | 18m | −70% | No broken keys beyond Voyage free-tier rate limit; DNS + git email resolved inline |
+| T1 Next.js scaffold | 60m | 7m | −88% | `create-next-app` + `npm install` is fast; zero manual config |
+| T2 Build corpus | 60m | 3m | −95% | Clone repo > scrape; markdown is clean; no chunking needed |
+| T3 Embed + Supabase | 60m | 31m | −48% | Voyage free-tier 429 cost ~20m of debugging + payment-method round-trip |
+| T4 RAG retriever | 60m | 2m | −97% | Written in parallel during T3 wait — estimate double-counted overlap |
+| T5 Claude streaming API | 60m | 3m | −95% | Vercel AI SDK handled SSE; one TS fix (convertToModelMessages is async in v6) |
+| T6 Chat UI | 90m | 2m (code) | −98% | Tailwind + existing brand tokens; no custom components beyond Message and ThinkingDots |
+| Polish — reset + smoothness + guardrail | — | 14m | (unplanned) | Three user-driven fixes. Off-topic gate is now core, not polish. |
+| T9 Debug mode | 120m | 2m | −98% | Largest delta. JSON detection + alt system prompt is small surface area. |
+| T10 Rate limiting | 60m | 7m | −88% | Postgres function simpler than an Edge middleware + KV store |
+| T7 Vercel deploy | 60m | 25m | −58% | Module-scope Supabase init crash + SSO manual toggle ate most of the time |
+| T12 Custom domain | 30m | 10m | −67% | Google Cloud DNS propagated instantly; SSL provisioned in ~45s |
+| T11 Mobile + error states | 60m | 3m (code) | −95% | CSS-only fixes. Real mobile verification still user-driven. |
+| T13 Analytics | 60m | <1m | −99% | `@vercel/analytics/next` is a one-line import |
+| T14 Final pass + Loom script | 60m | 1m | −98% | Loom script written once; acceptance ticked during real-time verification |
+| **TOTAL** | **960m** | **131m** | **−86%** | |
+
+## Why the estimates were so off
+
+- **Scaffolding tools matured.** Create-next-app + Tailwind 4 + Vercel AI SDK v6 remove what used to be 2-3 hours of config and boilerplate.
+- **One-chunk-per-doc simplified T2/T3.** The plan assumed chunking logic; Voyage's 32k context made it unnecessary.
+- **Parallel work during Voyage wait.** T4 ran during T3's rate-limit debug — plan treated them as serial.
+- **Brand tokens already decided.** T6 had a design system ready from `tamasdemeter.com`; no taste debate.
+- **No real bugs.** Build hit exactly one real issue (module-scope Supabase init on Vercel). Everything else was first-try green.
+
+## What the estimates got right
+
+- **Vercel deploy cost (60m → 25m)** — still the most friction per unit of work. SSO toggle, env var setup, and the module-init bug together cost ~20m even with tooling help. Lowest percentage-beat category.
+- **Off-topic guardrail was the right call to add.** Wasn't even in the plan — user caught it during testing. 8 min well spent.
+
+## Calibration note for next weekend build
+
+Estimates should assume:
+- Scaffold + RAG + streaming + UI: **0.5–1h each**, not 1–2h
+- Deploy: **still ~30m** (Vercel friction is stable)
+- DNS: **10m** once DNS provider access is confirmed
+- Debug surprises: **20% contingency**, not 50%
+
+Net: a similar "portfolio RAG chatbot" build is a **~3-4h evening**, not a weekend. The "weekend hack" framing was a 4x pessimism multiplier.
 
 ## Lessons (populate during Lock phase)
 
