@@ -47,7 +47,7 @@ async function embedBatch(inputs: string[]): Promise<number[][]> {
       Authorization: `Bearer ${VOYAGE_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ input: inputs, model: "voyage-3", input_type: "document" }),
+    body: JSON.stringify({ input: inputs, model: "voyage-4", input_type: "document" }),
   });
   if (!res.ok) throw new Error(`voyage ${res.status}: ${await res.text()}`);
   const json = (await res.json()) as {
@@ -102,7 +102,7 @@ async function main() {
   }
 
   console.log(`\n✓ embedded ${embedded} entries in ${Math.round((Date.now() - t0) / 1000)}s`);
-  console.log(`  estimated cost: $${((tokens / 1_000_000) * 0.12).toFixed(4)} (voyage-3 @ $0.12/M)`);
+  console.log(`  estimated cost: $${((tokens / 1_000_000) * 0.06).toFixed(4)} (voyage-4 @ $0.06/M)`);
 }
 
 main().catch((err) => {

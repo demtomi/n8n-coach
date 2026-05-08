@@ -16,7 +16,7 @@ Built as a portfolio piece by [Tamas Demeter](https://tamasdemeter.com) over a w
 
 - **Framework** — Next.js 16 (App Router), React 19, Tailwind 4, TypeScript
 - **LLM** — Claude Sonnet 4.6 via Vercel AI SDK v6 + `@ai-sdk/anthropic`
-- **Embeddings** — Voyage `voyage-3` (1024-dim)
+- **Embeddings** — Voyage `voyage-4` (1024-dim, multilingual)
 - **Vector store** — Supabase pgvector with HNSW index
 - **Corpus** — 332 pages from `n8n-io/n8n-docs` (core-nodes, cluster-nodes, trigger-nodes, workflows, code)
 - **Hosting** — Vercel
@@ -33,7 +33,7 @@ User query
            │
            ▼
 ┌─────────────────────────────────────┐
-│ Embed query (Voyage voyage-3)       │
+│ Embed query (Voyage voyage-4)       │
 │ Cosine similarity in Supabase       │
 │ Top-5 matching docs                 │
 └──────────┬──────────────────────────┘
