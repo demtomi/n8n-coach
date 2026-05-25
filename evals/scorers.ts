@@ -1,4 +1,5 @@
 import type { RagResult } from "@/lib/rag";
+import Anthropic from "@anthropic-ai/sdk";
 
 export type EvalQuery = {
   id: string;
@@ -108,5 +109,187 @@ export function scoreFaithfulnessStub(
     total: expected_facts.length,
     rate: covered.length / expected_facts.length,
     missing,
+  };
+}
+
+// Verdict semantics:
+//   supported    — fact is conveyed accurately and completely in the answer
+//   partial      — fact is mentioned but incomplete, imprecise, or only implied
+//   unsupported  — fact is not present in the answer
+//   contradicted — answer states the opposite of the fact (actively wrong)
+export type FactVerdict = "supported" | "partial" | "unsupported" | "contradicted";
+
+export type FactJudgement = {
+  fact: string;
+  verdict: FactVerdict;
+  passes: FactVerdict[];
+  rationale: string;
+};
+
+export type FaithfulnessLLMScore = {
+  judgements: FactJudgement[];
+  supported: number;
+  partial: number;
+  unsupported: number;
+  contradicted: number;
+  total: number;
+  rate: number;
+};
+
+const JUDGE_MODEL = "claude-haiku-4-5-20251001";
+const JUDGE_PASSES = 3;
+
+const VERDICT_RUBRIC = `<rubric>
+Verdicts:
+- supported: the answer conveys the fact accurately and substantively. Paraphrasing is fine; the meaning must match.
+- partial: the answer mentions part of the fact, hints at it, or conveys it inaccurately but in the right direction.
+- unsupported: the answer does not address this fact at all.
+- contradicted: the answer states something that directly conflicts with the fact (wrong value, wrong behavior, inverted condition).
+</rubric>`;
+
+const VERDICT_INSTRUCTIONS = `You are judging whether a candidate answer conveys a specific expected fact about n8n. Be strict but fair: paraphrasing counts as supported; vague allusion is partial; omission is unsupported; an opposite or inverted claim is contradicted.
+
+Return exactly one JSON object on one line, no prose, no markdown fence:
+{"verdict":"supported|partial|unsupported|contradicted","rationale":"one short sentence"}`;
+
+function lazyAnthropic(): Anthropic {
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+}
+
+function majorityVerdict(passes: FactVerdict[]): FactVerdict {
+  const counts: Record<FactVerdict, number> = {
+    supported: 0,
+    partial: 0,
+    unsupported: 0,
+    contradicted: 0,
+  };
+  for (const p of passes) counts[p]++;
+  // Conservative tie-break order: contradicted > unsupported > partial > supported.
+  // A single contradiction beats a single support on a tied vote — the gate is on
+  // groundedness, not optimism.
+  const priority: FactVerdict[] = ["contradicted", "unsupported", "partial", "supported"];
+  let best: FactVerdict = "unsupported";
+  let bestCount = -1;
+  for (const v of priority) {
+    if (counts[v] > bestCount) {
+      best = v;
+      bestCount = counts[v];
+    }
+  }
+  return best;
+}
+
+function verdictWeight(v: FactVerdict): number {
+  switch (v) {
+    case "supported":
+      return 1.0;
+    case "partial":
+      return 0.5;
+    case "unsupported":
+      return 0.0;
+    case "contradicted":
+      return -0.5;
+  }
+}
+
+function parseVerdict(raw: string): { verdict: FactVerdict; rationale: string } {
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) {
+    return { verdict: "unsupported", rationale: `parse_failed: ${raw.slice(0, 80)}` };
+  }
+  try {
+    const parsed = JSON.parse(match[0]) as { verdict?: string; rationale?: string };
+    const v = (parsed.verdict || "").toLowerCase();
+    if (v === "supported" || v === "partial" || v === "unsupported" || v === "contradicted") {
+      return { verdict: v as FactVerdict, rationale: parsed.rationale ?? "" };
+    }
+    return { verdict: "unsupported", rationale: `unknown_verdict: ${v}` };
+  } catch {
+    return { verdict: "unsupported", rationale: `parse_failed: ${raw.slice(0, 80)}` };
+  }
+}
+
+async function judgeOnePass(args: {
+  client: Anthropic;
+  query: string;
+  answer: string;
+  fact: string;
+}): Promise<{ verdict: FactVerdict; rationale: string }> {
+  const { client, query, answer, fact } = args;
+  const userPrompt = `Question asked of the n8n coach:
+${query}
+
+Candidate answer:
+${answer}
+
+Expected fact to evaluate:
+${fact}
+
+${VERDICT_RUBRIC}
+${VERDICT_INSTRUCTIONS}`;
+
+  const result = await client.messages.create({
+    model: JUDGE_MODEL,
+    max_tokens: 200,
+    temperature: 0,
+    messages: [{ role: "user", content: userPrompt }],
+  });
+  const textBlock = result.content.find((b) => b.type === "text");
+  const raw = textBlock && "text" in textBlock ? textBlock.text : "";
+  return parseVerdict(raw);
+}
+
+export async function scoreFaithfulnessLLM(args: {
+  query: string;
+  answer: string;
+  expected_facts: string[];
+}): Promise<FaithfulnessLLMScore> {
+  const { query, answer, expected_facts } = args;
+  if (expected_facts.length === 0) {
+    return {
+      judgements: [],
+      supported: 0,
+      partial: 0,
+      unsupported: 0,
+      contradicted: 0,
+      total: 0,
+      rate: 1.0,
+    };
+  }
+
+  const client = lazyAnthropic();
+  const judgements: FactJudgement[] = [];
+
+  for (const fact of expected_facts) {
+    const passes: FactVerdict[] = [];
+    let lastRationale = "";
+    for (let i = 0; i < JUDGE_PASSES; i++) {
+      const { verdict, rationale } = await judgeOnePass({ client, query, answer, fact });
+      passes.push(verdict);
+      if (rationale) lastRationale = rationale;
+    }
+    const verdict = majorityVerdict(passes);
+    judgements.push({ fact, verdict, passes, rationale: lastRationale });
+  }
+
+  const counts: Record<FactVerdict, number> = {
+    supported: 0,
+    partial: 0,
+    unsupported: 0,
+    contradicted: 0,
+  };
+  for (const j of judgements) counts[j.verdict]++;
+
+  const weighted = judgements.reduce((sum, j) => sum + verdictWeight(j.verdict), 0);
+  const rate = Math.max(0, Math.min(1, weighted / judgements.length));
+
+  return {
+    judgements,
+    supported: counts.supported,
+    partial: counts.partial,
+    unsupported: counts.unsupported,
+    contradicted: counts.contradicted,
+    total: judgements.length,
+    rate,
   };
 }

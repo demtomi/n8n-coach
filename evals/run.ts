@@ -27,8 +27,9 @@ import {
   scoreRetrieval,
   scoreModeRouting,
   scoreCitationValidity,
-  scoreFaithfulnessStub,
+  scoreFaithfulnessLLM,
   type EvalQuery,
+  type FaithfulnessLLMScore,
 } from "./scorers";
 
 type CorpusEntry = { id: string; docs_url: string };
@@ -115,7 +116,7 @@ async function main() {
     const modeScore = scoreModeRouting(q.mode, observedMode);
 
     let retrievalScore = null as null | ReturnType<typeof scoreRetrieval>;
-    let faithfulness = null as null | ReturnType<typeof scoreFaithfulnessStub>;
+    let faithfulness = null as null | FaithfulnessLLMScore;
     let citation = null as null | ReturnType<typeof scoreCitationValidity>;
     let answer: string | null = null;
 
@@ -124,14 +125,21 @@ async function main() {
       retrievalScore = scoreRetrieval(q, retrieved);
       if (!noGen) {
         answer = await generateAnswer(q.query);
-        faithfulness = scoreFaithfulnessStub(answer, q.expected_facts);
+        faithfulness = await scoreFaithfulnessLLM({
+          query: q.query,
+          answer,
+          expected_facts: q.expected_facts,
+        });
         citation = scoreCitationValidity(answer, corpusUrls);
       }
     }
 
     const took = Date.now() - t0;
+    const faithSummary = faithfulness
+      ? `${faithfulness.supported}s/${faithfulness.partial}p/${faithfulness.unsupported}u/${faithfulness.contradicted}c (${faithfulness.rate.toFixed(2)})`
+      : "-";
     console.log(
-      `[eval] ${q.id} mode=${observedMode}${modeScore.correct ? "✓" : "✗"} recall@5=${retrievalScore?.recall_at_5?.toFixed(2) ?? "-"} faithful=${faithfulness?.rate.toFixed(2) ?? "-"} ${took}ms`
+      `[eval] ${q.id} mode=${observedMode}${modeScore.correct ? "✓" : "✗"} recall@5=${retrievalScore?.recall_at_5?.toFixed(2) ?? "-"} faithful=${faithSummary} ${took}ms`
     );
 
     results.push({
@@ -155,14 +163,16 @@ async function main() {
       results.filter((r) => (r.mode as { correct: boolean }).correct).length / queries.length,
     mean_recall_at_5: meanNonNull(results.map((r) => (r.retrieval as { recall_at_5: number | null } | null)?.recall_at_5 ?? null)),
     mean_mrr_at_5: meanNonNull(results.map((r) => (r.retrieval as { mrr_at_5: number | null } | null)?.mrr_at_5 ?? null)),
-    mean_faithfulness_stub: meanNonNull(results.map((r) => (r.faithfulness as { rate: number } | null)?.rate ?? null)),
+    mean_faithfulness_llm: meanNonNull(results.map((r) => (r.faithfulness as FaithfulnessLLMScore | null)?.rate ?? null)),
+    faithfulness_verdict_counts: aggregateVerdicts(results),
     mean_citation_validity: meanNonNull(results.map((r) => (r.citation as { validity_rate: number } | null)?.validity_rate ?? null)),
   };
 
   await fs.mkdir(reportsDir, { recursive: true });
   const stamp = startedAt.replace(/[:.]/g, "-").slice(0, 19);
-  const jsonPath = path.join(reportsDir, `${stamp}-baseline.json`);
-  const mdPath = path.join(reportsDir, `${stamp}-baseline.md`);
+  const suffix = process.env.EVAL_LABEL ? `-${process.env.EVAL_LABEL}` : "-baseline";
+  const jsonPath = path.join(reportsDir, `${stamp}${suffix}.json`);
+  const mdPath = path.join(reportsDir, `${stamp}${suffix}.md`);
 
   await fs.writeFile(jsonPath, JSON.stringify({ summary, results }, null, 2));
   await fs.writeFile(mdPath, renderMarkdown(summary, results));
@@ -179,6 +189,22 @@ function meanNonNull(xs: Array<number | null>): number | null {
   const vals = xs.filter((x): x is number => x !== null);
   if (vals.length === 0) return null;
   return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+function aggregateVerdicts(
+  results: Array<Record<string, unknown>>
+): { supported: number; partial: number; unsupported: number; contradicted: number; total: number } {
+  const acc = { supported: 0, partial: 0, unsupported: 0, contradicted: 0, total: 0 };
+  for (const r of results) {
+    const f = r.faithfulness as FaithfulnessLLMScore | null;
+    if (!f) continue;
+    acc.supported += f.supported;
+    acc.partial += f.partial;
+    acc.unsupported += f.unsupported;
+    acc.contradicted += f.contradicted;
+    acc.total += f.total;
+  }
+  return acc;
 }
 
 function renderMarkdown(
@@ -201,28 +227,48 @@ function renderMarkdown(
   lines.push(`| Mode-routing accuracy | ${fmt(summary.mode_accuracy as number)} |`);
   lines.push(`| Mean recall@5 | ${fmt(summary.mean_recall_at_5 as number | null)} |`);
   lines.push(`| Mean MRR@5 | ${fmt(summary.mean_mrr_at_5 as number | null)} |`);
-  lines.push(`| Mean faithfulness (stub) | ${fmt(summary.mean_faithfulness_stub as number | null)} |`);
+  lines.push(`| Mean faithfulness (LLM-judge, 3-pass) | ${fmt(summary.mean_faithfulness_llm as number | null)} |`);
   lines.push(`| Mean citation validity | ${fmt(summary.mean_citation_validity as number | null)} |`);
   lines.push("");
+  const verdicts = summary.faithfulness_verdict_counts as {
+    supported: number;
+    partial: number;
+    unsupported: number;
+    contradicted: number;
+    total: number;
+  };
+  if (verdicts.total > 0) {
+    lines.push(`## Faithfulness verdict distribution`);
+    lines.push("");
+    lines.push(`| Verdict | Count | Share |`);
+    lines.push(`| --- | --- | --- |`);
+    lines.push(`| supported | ${verdicts.supported} | ${fmt(verdicts.supported / verdicts.total)} |`);
+    lines.push(`| partial | ${verdicts.partial} | ${fmt(verdicts.partial / verdicts.total)} |`);
+    lines.push(`| unsupported | ${verdicts.unsupported} | ${fmt(verdicts.unsupported / verdicts.total)} |`);
+    lines.push(`| contradicted | ${verdicts.contradicted} | ${fmt(verdicts.contradicted / verdicts.total)} |`);
+    lines.push(`| total facts judged | ${verdicts.total} | — |`);
+    lines.push("");
+  }
   lines.push(`## Per-query results`);
   lines.push("");
-  lines.push(`| ID | Mode (exp / obs) | Recall@5 | MRR@5 | Faithful (stub) | Citations | Latency |`);
-  lines.push(`| --- | --- | --- | --- | --- | --- | --- |`);
+  lines.push(`| ID | Mode (exp / obs) | Recall@5 | MRR@5 | Faithful (s/p/u/c) | Rate | Citations | Latency |`);
+  lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- |`);
   for (const r of results) {
     const mode = r.mode as { expected: string; observed: string; correct: boolean };
     const ret = r.retrieval as { recall_at_5: number | null; mrr_at_5: number | null } | null;
-    const fr = r.faithfulness as { rate: number; covered: number; total: number } | null;
+    const fr = r.faithfulness as FaithfulnessLLMScore | null;
     const ct = r.citation as { urls_found: number; urls_valid: number } | null;
+    const faithCol = fr ? `${fr.supported}/${fr.partial}/${fr.unsupported}/${fr.contradicted}` : "—";
     lines.push(
-      `| ${r.id} | ${mode.expected}/${mode.observed} ${mode.correct ? "✓" : "✗"} | ${fmt(ret?.recall_at_5)} | ${fmt(ret?.mrr_at_5)} | ${fr ? `${fr.covered}/${fr.total}` : "—"} | ${ct ? `${ct.urls_valid}/${ct.urls_found}` : "—"} | ${r.latency_ms}ms |`
+      `| ${r.id} | ${mode.expected}/${mode.observed} ${mode.correct ? "✓" : "✗"} | ${fmt(ret?.recall_at_5)} | ${fmt(ret?.mrr_at_5)} | ${faithCol} | ${fmt(fr?.rate ?? null)} | ${ct ? `${ct.urls_valid}/${ct.urls_found}` : "—"} | ${r.latency_ms}ms |`
     );
   }
   lines.push("");
   lines.push(`## Notes`);
   lines.push("");
-  lines.push("- Faithfulness is the STUB scorer (keyword-overlap heuristic). LLM-judge replacement is open work in plan.md.");
+  lines.push("- Faithfulness is the LLM-judge (Haiku 4.5, 3-pass consensus, conservative tie-break). Per-fact verdicts persisted in the JSON sibling. Weighting: supported=1.0, partial=0.5, unsupported=0.0, contradicted=−0.5 (clamped to [0,1]).");
   lines.push("- Recall@5 is null for queries with empty expected_doc_ids — labeling is loose for those.");
-  lines.push("- Latency includes network + Supabase RPC + (optional) generation.");
+  lines.push("- Latency includes network + Supabase RPC + (optional) generation + 3-pass judge.");
   return lines.join("\n");
 }
 

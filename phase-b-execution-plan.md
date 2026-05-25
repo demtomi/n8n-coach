@@ -2,8 +2,8 @@
 
 > **Companion to** `plan.md` § Phase v2 → Phase B
 > **Drafted:** 2026-05-14
-> **Status (2026-05-25):** Small-slice SHIPPED — **B2 caching + B4 eval harness scaffold + B5 Lighthouse setup**. B1 (rerank) and B3 (hybrid) deferred to next session. Decision log entries below capture the Q1-Q7 resolutions.
-> **Pick-up state:** v1 LIVE at `coach.tamasdemeter.com` (DNS restored 2026-05-25). Embeddings on `voyage-4`. Reranker still pending. Cache_control wired on system prefix (vocab primer + base/debug rules, ~2,160 tokens). Eval harness boots end-to-end against live retrieve(); 3-query smoke run passed (mode-routing 3/3, recall@5 1.00 on ans-01).
+> **Status (2026-05-25 evening):** B1 (rerank) + B2 (caching) + B4 scaffold + B5 (Lighthouse) SHIPPED. **Faithfulness STUB → LLM-judge (3-pass Haiku 4.5 consensus) SHIPPED** — `evals/scorers.ts::scoreFaithfulnessLLM`. Faithfulness now meaningfully measurable. **Next: B3 hybrid search + RRF.**
+> **Pick-up state:** v1 LIVE at `coach.tamasdemeter.com`. Embeddings on `voyage-4`, two-stage retrieval with `voyage-rerank-2.5`, dual off-topic gate. Cache_control wired (~2,160 tokens). Eval harness runs 30 queries with LLM-judge faithfulness in ~13min for ~$0.40.
 
 ## Decision log (2026-05-25 small-slice)
 
@@ -58,13 +58,35 @@ Notable:
 
 Deployment: commit `d48240e` pushed, Vercel prod deploy verified HTTP 200.
 
+## Faithfulness LLM-judge results (2026-05-25 evening, same session)
+
+Replaced keyword-overlap STUB with 3-pass `claude-haiku-4-5-20251001` consensus judge per `feedback_llm_extraction_pipeline.md`. Verdicts per fact: `supported` / `partial` / `unsupported` / `contradicted`; majority vote with conservative tie-break (contradicted > unsupported > partial > supported); weighting supported=1.0, partial=0.5, unsupported=0.0, contradicted=−0.5, clamped to [0,1].
+
+| Metric | STUB (post-B1) | LLM-judge (post-B1) |
+| --- | --- | --- |
+| Mean faithfulness | 0.657 | **0.745** |
+| Total facts judged | n/a | 95 |
+| supported | n/a | 61 (64.2%) |
+| partial | n/a | 17 (17.9%) |
+| unsupported | n/a | 17 (17.9%) |
+| **contradicted** | n/a | **0 (0.0%)** |
+
+**Headline:** zero contradictions across 95 facts. The system omits facts under retrieval gaps but does not invent or invert them. The two faithfulness-zero queries (`ans-13-credentials-encryption` 0.00, `ans-19-self-host-queue-mode` 0.13) are retrieval-blank cases where the model refused rather than hallucinated — correct refusal behavior, but coverage suffers.
+
+Cost: ~$0.40 per full run (95 facts × 3 passes ≈ 285 Haiku calls + 25 Sonnet 4.6 generations). Latency: ~13min for the full 30-query run, ~25-30s per `answer` query.
+
+Report at `evals/reports/2026-05-25-post-b1-judge-baseline.{md,json}`. Per-fact verdicts and judge rationales persisted in the JSON sibling for sample-verification audits.
+
+**Gate readiness:** plan target faithfulness ≥ 0.95 is **not in reach with the current corpus** — the 18% unsupported share is driven by missing-docs retrieval, not by judge stringency. Two options for the gate revision (Q6):
+- (a) Lower to ≥ 0.80 (current 0.745 is 5.5pp below) and add a hard zero-tolerance for contradictions (already at 0.0%).
+- (b) Keep ≥ 0.95 but acknowledge it requires a Phase D2 corpus expansion (credentials, self-host queue mode docs) before exit.
+
 ## Next-session start
 
 1. **B3 hybrid search + RRF** — Supabase migration adds `ts_vector` column + GIN index + `coach_hybrid_match` RPC (vector ⊕ BM25 via reciprocal rank fusion). Switch `lib/rag.ts::retrieve()` to call hybrid RPC, feed top-50 fused candidates into the existing rerank stage. Target: lift recall@5 from 0.778 → ≥ 0.85 (plan exit-gate), especially on `dbg-01-merge-no-output` + `dbg-02-loop-infinite` (still recall=0.00 — debug remainder text strips JSON, leaving thin semantic signal where keyword match would shine).
-2. Re-run eval as `2026-XX-XX-post-b3-baseline.md`.
-3. **Decide Q6 (exit-gate revision)** from the pre-B1 → post-B1 → post-B3 trajectory. Plan-target retrieval@5 ≥ 0.85 looks achievable. Faithfulness ≥ 0.95 is *not measurable* with the STUB scorer — needs LLM-judge upgrade first, otherwise the gate is meaningless.
-4. **Faithfulness STUB → LLM-judge upgrade** — score with Claude 3-pass consensus per `feedback_llm_extraction_pipeline.md`. Currently the keyword-overlap heuristic systematically under-counts. Should land before exit-gate sign-off.
-5. Open: live cache_read verification in production (Vercel logs drop the `onFinish` async log). Lift via Langfuse or by emitting cache metrics through a synchronous header.
+2. Re-run eval as `2026-XX-XX-post-b3-judge-baseline.md`. Faithfulness now LLM-judged → numbers are honest on both gates.
+3. **Decide Q6 (exit-gate revision)** from the pre-B1 → post-B1 → post-B3 trajectory. Plan-target retrieval@5 ≥ 0.85 looks achievable. Faithfulness ≥ 0.95 requires corpus expansion (see options above).
+4. Open: live cache_read verification in production (Vercel logs drop the `onFinish` async log). Lift via Langfuse or by emitting cache metrics through a synchronous header.
 
 ---
 
