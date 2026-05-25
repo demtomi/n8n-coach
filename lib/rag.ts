@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { rerank } from "./rerank";
 
 export type RagResult = {
   id: string;
@@ -8,7 +9,10 @@ export type RagResult = {
   github_url: string;
   content: string;
   similarity: number;
+  relevance_score?: number;
 };
+
+const RERANK_POOL_SIZE = 50;
 
 let _supabase: SupabaseClient | null = null;
 function supabase(): SupabaseClient {
@@ -46,10 +50,19 @@ export async function retrieve(query: string, topK = 5): Promise<RagResult[]> {
   const embedding = await embedQuery(query);
   const { data, error } = await supabase().rpc("coach_match_documents", {
     query_embedding: embedding,
-    match_count: topK,
+    match_count: RERANK_POOL_SIZE,
   });
   if (error) throw new Error(`rag retrieve failed: ${error.message}`);
-  return (data ?? []) as RagResult[];
+  const pool = (data ?? []) as RagResult[];
+  if (pool.length === 0) return [];
+
+  const docs = pool.map((p) => `${p.title}\n\n${p.content}`);
+  const reranked = await rerank(query, docs, topK);
+
+  return reranked.map((r) => ({
+    ...pool[r.index],
+    relevance_score: r.relevance_score,
+  }));
 }
 
 export function formatContext(results: RagResult[]): string {

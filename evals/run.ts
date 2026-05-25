@@ -33,7 +33,8 @@ import {
 
 type CorpusEntry = { id: string; docs_url: string };
 
-const OFF_TOPIC_THRESHOLD = 0.25;
+const OFF_TOPIC_SIM_THRESHOLD = 0.25;
+const OFF_TOPIC_RELEVANCE_THRESHOLD = 0.3;
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -53,7 +54,10 @@ async function classifyMode(query: string): Promise<"answer" | "debug" | "redire
   const remainder = wf ? "" : query;
   const retrieved = await retrieve(remainder, 1);
   const topSim = retrieved[0]?.similarity ?? 0;
-  return topSim >= OFF_TOPIC_THRESHOLD ? "answer" : "redirect";
+  const topRel = retrieved[0]?.relevance_score ?? 0;
+  return topSim >= OFF_TOPIC_SIM_THRESHOLD && topRel >= OFF_TOPIC_RELEVANCE_THRESHOLD
+    ? "answer"
+    : "redirect";
 }
 
 async function generateAnswer(query: string): Promise<string> {

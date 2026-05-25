@@ -31,7 +31,8 @@ function latestUserText(messages: UIMessage[]): string {
   return "";
 }
 
-const OFF_TOPIC_THRESHOLD = 0.25;
+const OFF_TOPIC_SIM_THRESHOLD = 0.25;
+const OFF_TOPIC_RELEVANCE_THRESHOLD = 0.3;
 
 const BASE_SYSTEM = `You are an n8n workflow coach. You help users understand, design, and debug n8n workflows.
 
@@ -79,7 +80,10 @@ export async function POST(req: Request) {
 
   const retrieved = await retrieve(semanticQuery, 5);
   const topSim = retrieved[0]?.similarity ?? 0;
-  const onTopic = workflow ? true : topSim >= OFF_TOPIC_THRESHOLD;
+  const topRel = retrieved[0]?.relevance_score ?? 0;
+  const onTopic = workflow
+    ? true
+    : topSim >= OFF_TOPIC_SIM_THRESHOLD && topRel >= OFF_TOPIC_RELEVANCE_THRESHOLD;
 
   const mode = workflow ? "debug" : onTopic ? "answer" : "redirect";
 
@@ -113,7 +117,7 @@ export async function POST(req: Request) {
   }
 
   console.log(
-    `[chat] mode=${mode} top_sim=${topSim.toFixed(3)} nodes=${workflow?.nodeCount ?? 0} query="${semanticQuery.slice(0, 80)}"`
+    `[chat] mode=${mode} top_sim=${topSim.toFixed(3)} top_rel=${topRel.toFixed(3)} nodes=${workflow?.nodeCount ?? 0} query="${semanticQuery.slice(0, 80)}"`
   );
 
   const modelMessages = await convertToModelMessages(messages);
