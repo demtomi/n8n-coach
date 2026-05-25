@@ -35,12 +35,36 @@
 
 **Verdict:** CLS, accessibility, FCP all clean. **LCP 3.0s misses the <1.5s target** — log and defer per plan §B5 ("resist Phase B fix; punt to Phase A4 landing polish"). The image / hero / initial Tailwind hydration is the likely cause; tackle alongside merchandising work.
 
+## B1 results (2026-05-25, same session)
+
+Baseline pre-B1 + B1 (Voyage rerank-2.5) shipped same day. Comparison on 30-query gold-set:
+
+| Metric | Pre-B1 | Post-B1 | Δ |
+| --- | --- | --- | --- |
+| Mode accuracy | 0.933 | 0.933 | 0 |
+| Mean recall@5 | 0.722 | **0.778** | **+5.6pp** |
+| Mean MRR@5 | 0.681 | 0.657 | −2.4pp |
+| Faithfulness (STUB) | 0.667 | 0.657 | −1.0pp |
+| Citation validity | 0.780 | 0.754 | −2.6pp |
+
+Reports: `evals/reports/2026-05-25-{pre,post}-b1-baseline.{md,json}`.
+
+Notable:
+- `ans-11-pipedrive-paginate` flipped recall 0.00 → 1.00 — rerank surfaced the right doc that vector missed.
+- MRR drop suggests reranker pulls broader context into top-5 but not always at rank 1.
+- Mode accuracy unchanged — the 2 "redirect misses" (`rdr-03-generic-python`, `rdr-04-zapier-compare`) are label-noise: n8n has "Extract From File" for CSVs and docs comparing itself to Zapier/Make. Both ARE legitimate n8n questions.
+- Threshold gate now dual: `OFF_TOPIC_SIM_THRESHOLD=0.25` AND `OFF_TOPIC_RELEVANCE_THRESHOLD=0.30`. Tuning room if needed.
+- Latency adds ~50-100ms per query (rerank API hop). Stayed under the +200ms acceptance.
+
+Deployment: commit `d48240e` pushed, Vercel prod deploy verified HTTP 200.
+
 ## Next-session start
 
-1. Re-run full eval baseline with `npm run eval` (generation enabled, ~$0.30 cost) → write `evals/reports/<stamp>-baseline.md` as the pre-rerank reference.
-2. B1 Voyage rerank-2.5 — wrapper at `lib/rerank.ts`, top-50 from RPC → rerank to top-5, plumb `relevance_score` through `RagResult`. Re-tune `OFF_TOPIC_THRESHOLD` on rerank score.
-3. B3 hybrid search — Supabase migration adds `ts_vector` column + GIN + RRF RPC. Switch `lib/rag.ts::retrieve` to call hybrid RPC.
-4. Re-run eval as `<stamp>-post-b1.md` and `<stamp>-post-b3.md`. Decide Q6 (exit-gate revision) from the deltas.
+1. **B3 hybrid search + RRF** — Supabase migration adds `ts_vector` column + GIN index + `coach_hybrid_match` RPC (vector ⊕ BM25 via reciprocal rank fusion). Switch `lib/rag.ts::retrieve()` to call hybrid RPC, feed top-50 fused candidates into the existing rerank stage. Target: lift recall@5 from 0.778 → ≥ 0.85 (plan exit-gate), especially on `dbg-01-merge-no-output` + `dbg-02-loop-infinite` (still recall=0.00 — debug remainder text strips JSON, leaving thin semantic signal where keyword match would shine).
+2. Re-run eval as `2026-XX-XX-post-b3-baseline.md`.
+3. **Decide Q6 (exit-gate revision)** from the pre-B1 → post-B1 → post-B3 trajectory. Plan-target retrieval@5 ≥ 0.85 looks achievable. Faithfulness ≥ 0.95 is *not measurable* with the STUB scorer — needs LLM-judge upgrade first, otherwise the gate is meaningless.
+4. **Faithfulness STUB → LLM-judge upgrade** — score with Claude 3-pass consensus per `feedback_llm_extraction_pipeline.md`. Currently the keyword-overlap heuristic systematically under-counts. Should land before exit-gate sign-off.
+5. Open: live cache_read verification in production (Vercel logs drop the `onFinish` async log). Lift via Langfuse or by emitting cache metrics through a synchronous header.
 
 ---
 
