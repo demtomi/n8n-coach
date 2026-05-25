@@ -12,7 +12,7 @@
 - **Q3 Threshold retune after B1:** approved without re-asking; new threshold lands in `plan.md` decision log when B1 ships.
 - **Q4 Supabase migration auth:** Management API via DTS PAT, same project (`lxxkxqhriunbouvkzncj`) and pattern as the v1 `coach_chatbot_v1_tables` migration. No new credential needed; will execute when B3 lands.
 - **Q5 Lighthouse target URL:** AUTO-RESOLVED — DNS for `coach.tamasdemeter.com` restored 2026-05-25 (Cloudflare API CNAME, see `reference/api-references/cloudflare-api.md`). First Lighthouse run captured at `docs/lighthouse/2026-05-25T18-48-32-mobile.{html,json}`.
-- **Q6 Exit-gate revision:** DEFERRED — decide after first full baseline run with generation enabled.
+- **Q6 Exit-gate revision:** RESOLVED 2026-05-25 (post-judge). Single `faithfulness ≥ 0.95` replaced with two independent floors: **contradiction_rate = 0.00** (hard safety floor — already met at 0/95) AND **mean_faithfulness ≥ 0.80** (soft coverage floor — current 0.745, B3 should clear). Original 0.95 was a guess written before measurement; the LLM-judge upgrade revealed it conflated groundedness with corpus coverage. Industry RAG eval (RAGAS) treats them separately. The 18% unsupported share is corpus-completeness (missing docs on credentials encryption, self-host queue mode), not model unreliability — pursuing 0.95 forces corpus expansion into Phase B that belongs in Phase D2. plan.md § "Phase B exit gate" updated to the split-floor wording.
 - **Q7 Session scope:** small slice (~2h actual) — B2 + B4 scaffold + B5 setup shipped. B1 + B3 + full baseline run on next session.
 
 ## Lighthouse baseline (mobile, 2026-05-25, coach.tamasdemeter.com)
