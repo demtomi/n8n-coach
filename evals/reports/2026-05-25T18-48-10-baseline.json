@@ -1,0 +1,67 @@
+{
+  "summary": {
+    "started_at": "2026-05-25T18:48:10.917Z",
+    "finished_at": "2026-05-25T18:48:14.566Z",
+    "n": 3,
+    "gen_enabled": false,
+    "mode_accuracy": 1,
+    "mean_recall_at_5": 0.5,
+    "mean_mrr_at_5": 0.5,
+    "mean_faithfulness_stub": null,
+    "mean_citation_validity": null
+  },
+  "results": [
+    {
+      "id": "ans-01-merge-modes",
+      "query": "What are the different modes of the Merge node and when should I use each?",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 1,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__merge",
+        "top_similarity": 0.596488499850721
+      },
+      "faithfulness": null,
+      "citation": null,
+      "answer": null,
+      "latency_ms": 2737
+    },
+    {
+      "id": "dbg-01-merge-no-output",
+      "query": "Why doesn't this workflow output anything? Here's the JSON: {\"nodes\":[{\"name\":\"Manual Trigger\",\"type",
+      "mode": {
+        "expected": "debug",
+        "observed": "debug",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 0,
+        "mrr_at_5": 0,
+        "top_doc_id": "docs__code__cookbook__code-node__number-items-last-node",
+        "top_similarity": 0.438754934443554
+      },
+      "faithfulness": null,
+      "citation": null,
+      "answer": null,
+      "latency_ms": 425
+    },
+    {
+      "id": "rdr-01-weather",
+      "query": "What's the weather like in Budapest tomorrow?",
+      "mode": {
+        "expected": "redirect",
+        "observed": "redirect",
+        "correct": true
+      },
+      "retrieval": null,
+      "faithfulness": null,
+      "citation": null,
+      "answer": null,
+      "latency_ms": 487
+    }
+  ]
+}

@@ -314,7 +314,7 @@ WHAT BROKE: "What's the exchange rate for USD/HUF?" got a partially-helpful repl
 WHERE: app/api/chat/route.ts — system prompt alone wasn't enough.
 ROOT CAUSE: unclear requirements — plan didn't specify off-topic behavior; system prompt said "only use retrieved docs" but model still leaked training-data suggestions.
 FIX: (1) Added similarity gate: if top-1 RAG result < 0.25, switch to a strict REDIRECT_SYSTEM prompt that forces a one-sentence decline + invite. (2) Strengthened BASE_SYSTEM: explicit ban on external tools/sites; instruction to answer only the n8n portion of mixed questions.
-RULE: When building a RAG chatbot, always add a similarity gate in addition to a system prompt. The prompt handles tone; the gate handles scope. Tune threshold with a 5-query probe (off-topic vs on-topic) before shipping. 0.25 worked here with voyage-3.
+RULE: When building a RAG chatbot, always add a similarity gate in addition to a system prompt. The prompt handles tone; the gate handles scope. Tune threshold with a 5-query probe (off-topic vs on-topic) before shipping. 0.25 worked with voyage-3 and re-verified for voyage-4 (2026-05-08): weather query 0.20, HTTP 401 query 0.47, webhook query 0.69 — gate still cleanly separates on/off-topic.
 ```
 
 ### 2026-04-23 — Module-scope env access breaks Vercel build
@@ -329,11 +329,17 @@ RULE: In Next.js API routes, never read env vars or initialize SDK clients at mo
 
 ---
 
-Threshold calibration data (voyage-3, cosine similarity, n8n corpus):
+Threshold calibration data (voyage-3 baseline 2026-04-23, cosine similarity, n8n corpus):
 - Off-topic (pizza, forex): 0.20–0.22
 - Borderline (python lists → code node): 0.29
 - Clearly on-topic (merge, webhook): 0.37–0.62
 - Chose 0.25 — above off-topic, below borderline.
+
+Re-verified on voyage-4 (2026-05-08, same 0.25 gate, same corpus):
+- Weather (off-topic): 0.20
+- HTTP 401 (on-topic, common-issues): 0.47
+- Webhook trigger (on-topic): 0.69
+- Gate still cleanly separates. No retune needed.
 
 ---
 
@@ -349,3 +355,139 @@ Threshold calibration data (voyage-3, cosine similarity, n8n corpus):
 - **2026-04-23:** Unlock complete. Voyage (`voyage-3`, 1024-dim) verified. Anthropic Sonnet 4.6 verified. Supabase connected (existing project `lxxkxqhriunbouvkzncj`); `vector` extension available but not installed — T3 migration. Vercel CLI authed as `tamas-8535`. DNS on Google Cloud. n8n-docs cloned to `/tmp/n8n-docs`.
 - **2026-04-23:** Git email = `dev@tamasdemeter.com` (local per-repo config only — matches website convention, avoids Vercel Hobby team-validation block).
 - **2026-04-23:** Corpus scope finalized: 332 files from `core-nodes`, `cluster-nodes`, `trigger-nodes`, `docs/workflows`, `docs/code`. Dropped `credentials` (319, OAuth setup) and `app-nodes` (307, service-specific) — low debug signal, not worth the embed cost for weekend scope.
+- **2026-05-08:** Migrated `voyage-3` → `voyage-4` (same 1024-dim, no schema change, $0.06/M same as voyage-3, multilingual baked in). Voyage doc-recommended over voyage-3.5 for new builds. All 332 docs re-embedded in 29s, ~211K tokens, $0.013 (within free 200M-token credit on the new lineup). Threshold 0.25 re-verified — no retune. Also fixed a stale cost-log line in `embed-corpus.ts` that quoted voyage-3 at $0.12/M (actual: $0.06/M). Commit `f33f072` on `demtomi/n8n-coach`, deployed `dpl_6cWPcThkcsS1VP4nZi73ApvQrgmS`.
+- **2026-05-08:** **DNS issue surfaced** — `coach.tamasdemeter.com` does not resolve via Google or Cloudflare resolvers; root `tamasdemeter.com` resolves fine. Subdomain record looks missing/removed at the DNS provider (Google Cloud per 2026-04-23 unlock). New deployment is live at the direct Vercel URL. Out of scope for the migration; flagged for separate action.
+- **2026-05-11:** v2 plan locked. Repositioning the artifact from "RAG chatbot" → "agent that fixes workflows" for Upwork proposal use. Phase order = **B (technical foundation) → C (reposition) → D (depth) → A (merchandising last)**. Rationale: build the better product before merchandising it; updated Loom must reflect Phase C output. DNS owned by user (manual fix at Google Cloud DNS). Loom script update deferred until Phase C ships. Full phase plan in § Phase v2 below.
+
+---
+
+# Phase v2 — Reposition for proposal use (2026-05-11 onwards)
+
+> **Why this phase exists:** v1 (shipped 2026-04-23) is a clean RAG chatbot. By 2026 standards this reads as commodity. v2 repositions the artifact from "AI chatbot about n8n" to **"AI agent that fixes n8n workflows"** so it punches in Upwork proposals.
+>
+> **North star (v2):** A prospect lands → clicks a pre-loaded broken workflow → sees a deterministic-validator finding render as a structured card with cited fix → copies the corrected JSON back to n8n. The chatbot turn is the explanation layer, not the diagnosis.
+>
+> **Source idea:** `business/automations-lab/ideas/018-n8n-coach-tier2-reposition.md`
+>
+> **Companion idea pointer:** also referenced from `business/automations-lab/CLAUDE.md` IDEAS table row 018.
+
+## v2 Acceptance Criteria
+
+- [ ] **Retrieval quality** — eval harness reports retrieval@5 ≥ 0.85 and faithfulness ≥ 0.95 on a 30-query labeled set
+- [ ] **Latency** — p50 TTFT ≤ 400ms warm, p95 ≤ 800ms (with prompt caching and reranker active)
+- [ ] **Cost** — prompt-caching hit rate ≥ 60% during steady traffic, measured cache_read / total_input ratio
+- [ ] **Validator coverage** — deterministic checks catch: missing credentials, invalid expressions, disconnected nodes, unknown node types, broken `$json.x` references. Output: typed `Finding[]` JSON.
+- [ ] **Agentic loop** — Sonnet 4.6 calls ≥ 2 tools per debug turn on average (`validate_workflow`, `search_docs`, `lookup_node_schema`)
+- [ ] **Structured output** — debug response renders as severity-badged diagnosis cards, not wall-of-markdown
+- [ ] **Workflow writeback** — corrected workflow JSON returned with "Copy to clipboard" button in UI
+- [ ] **Session memory** — second message in same conversation references prior context (verified on 5 test threads)
+- [ ] **Public stats** — `/stats` route shows totals + p50/p95 latency + top queries (PII-stripped)
+- [ ] **Live corpus refresh** — weekly cron pulls n8n-docs HEAD, re-embeds changed files only, logs delta count
+- [ ] **DNS** — `coach.tamasdemeter.com` resolves on Google + Cloudflare resolvers (USER ACTION, separate from code)
+- [ ] **Loom v2** — 90s recording reflecting Phase C output (validator + structured cards + writeback), embedded on landing
+- [ ] **Case study live** — published at `tamasdemeter.com/portfolio/n8n-coach` with metrics, screenshots, Loom embed
+- [ ] **Mobile sign-off** — verified on physical iPhone viewport, no horizontal scroll, debug-mode cards render cleanly
+- [ ] **Lighthouse** — LCP < 1.5s, CLS < 0.1, no accessibility errors, screenshots saved
+
+---
+
+## Phase B — Technical foundation (8-10h)
+
+**Goal:** Bring the foundation up to 2026 standard before any repositioning logic lands on top of it.
+
+| # | Task | Files | How to verify | Est |
+|---|---|---|---|---|
+| B1 | **Voyage rerank-2.5 integration** — top-50 vector → top-5 reranked. Confirm rerank-2.5 (not rerank-2, latest per `reference/api-references/voyage-api.md` 2026-05-11). New `lib/rerank.ts`, called between `retrieve` and `formatContext`. Pass through similarity + relevance_score. | `lib/rerank.ts` (new), `lib/rag.ts`, `app/api/chat/route.ts` | Eval harness retrieval@5 improves vs baseline; reranker adds <100ms warm | 2h |
+| B2 | **Prompt caching** — system prompt + retrieved docs marked with `cache_control: ephemeral`. Move system into array form (current is string). Verify `cache_creation_input_tokens` written on first call, `cache_read_input_tokens` populated on second within 5m. Sonnet 4.6 minimum 2048 tokens — measure system block size first; pad with stable boilerplate if needed. | `app/api/chat/route.ts`, possibly via AI SDK `providerOptions: { anthropic: { cacheControl: ... }}` | Two back-to-back identical queries — log cache_read_input_tokens > 0 on second | 1h |
+| B3 | **Hybrid search** — add `ts_vector` column to `coach_documents`, GIN index, run `to_tsvector('english', title \|\| ' ' \|\| content)` on each row. New RPC `coach_hybrid_match(query_text, query_embedding, k_each, alpha)` — weighted merge of BM25 + cosine, alpha tunable. | Supabase migration, `lib/rag.ts` (swap `retrieve` to call hybrid RPC), `scripts/embed-corpus.ts` (re-run to populate ts_vector) | 5 test queries (incl. exact node-name lookup like "Merge node") return correct chunk in top-3 | 2h |
+| B4 | **Eval harness** — `evals/queries.json` with 30 labeled queries (answer mode + debug mode + off-topic mix). Each query has `expected_doc_ids` (gold set of 1-3) and `expected_facts` (for faithfulness). Score retrieval@5, faithfulness (LLM-judge), citation-validity (URL exists in corpus). Output JSON + markdown report. | `evals/` (new dir), `evals/queries.json`, `evals/run.ts`, `evals/report-template.md` | Single `tsx evals/run.ts` produces report; checked into repo for public proof | 4h |
+| B5 | **Mobile + Lighthouse sign-off** — verify on physical phone, run Lighthouse on `/`, save screenshots to `docs/lighthouse-2026-05-XX.png` | none (verification only) | Both unverified items on v1 acceptance criteria flip to checked | 30m |
+
+**Phase B exit gate:** eval harness reports retrieval@5 ≥ 0.85, faithfulness ≥ 0.95. Prompt cache hit verified. All Phase B tasks ticked. Commit + push to `demtomi/n8n-coach`.
+
+---
+
+## Phase C — Reposition (12-16h, the heart of the upgrade)
+
+**Goal:** Move debug mode from "different system prompt" to "deterministic validator + LLM explainer + writeback."
+
+| # | Task | Files | How to verify | Est |
+|---|---|---|---|---|
+| C1 | **n8n node schema corpus** — script to fetch node schemas (parameters, credentials, version) from `n8n-io/n8n` repo (or from a live n8n instance via REST). New Supabase table `coach_node_schemas` keyed by `type` (e.g. `n8n-nodes-base.webhook`). Skip cluster/trigger nodes if too noisy — start with `core-nodes` and `nodes-base`. | `scripts/build-node-schemas.ts`, Supabase migration | Table has ≥ 200 node types, each with params + credentials JSON. Spot check: webhook + httpRequest + emailSend match docs. | 3h |
+| C2 | **Deterministic validator** — `lib/validator.ts` runs offline checks on parsed workflow JSON. Checks: (a) every node `type` exists in `coach_node_schemas`, (b) every credential reference exists in parameters, (c) every `$json.X` reference traces back to an upstream node output, (d) connections form a DAG (no orphans, no cycles), (e) expressions parse (basic n8n expression grammar). Returns `Finding[]` = `{node_id, severity, kind, message, doc_url?}`. | `lib/validator.ts`, `lib/expression-parser.ts` (subset of n8n expression grammar) | Test suite at `scripts/test-validator.ts` with 5 known-broken workflows: each finding matches expected severity + kind | 4h |
+| C3 | **Tool-use agentic loop** — Sonnet 4.6 with tools: `search_docs(query) → top-5 chunks`, `lookup_node_schema(type) → schema`, `validate_workflow(json) → Finding[]`, `propose_fix(node_id, change) → patch`. AI SDK v6 `streamText({ tools })` + `stopWhen` condition. Cap at 6 tool calls per turn. | `app/api/chat/route.ts` (major refactor), `lib/tools.ts` (new) | Trace 3 debug-mode queries; agent calls `validate_workflow` first, then `search_docs` for unknown findings, then writes prose with citations | 4h |
+| C4 | **Structured output** — debug-mode response shape = `{summary: string, findings: Finding[], corrected_json?: object, citations: Citation[]}`. Stream via AI SDK `experimental_output` (or two-pass: stream summary + fetch structured tail). | `app/api/chat/route.ts`, `lib/schemas.ts` | Curl debug-mode query, response includes typed JSON object alongside streamed prose | 2h |
+| C5 | **Diagnosis cards UI** — render Finding[] as cards with severity badge (error/warn/info), node name pill, doc-citation chip, "Apply fix" button (copies the snippet). | `app/page.tsx`, `components/DiagnosisCard.tsx` (new) | Debug-mode reply renders cards, not markdown. Mobile-friendly. | 2h |
+| C6 | **Corrected workflow writeback** — after validator + LLM, generate a fixed JSON (apply each `propose_fix` patch). UI shows "Copy fixed workflow" button → clipboard. | `lib/patch-workflow.ts`, `app/page.tsx` | Paste broken workflow → click "Copy fixed" → paste into n8n → workflow loads without the original errors | 2h |
+
+**Phase C exit gate:** 3 representative broken workflows render diagnosis cards + corrected JSON. Validator + tool-use traced via Vercel logs. Commit + push. **This is when the artifact reads as 2026, not 2024.**
+
+---
+
+## Phase D — Depth signals (10-15h)
+
+**Goal:** Add the credibility items that close skeptical buyers (memory, refresh, transparency, scale).
+
+| # | Task | Files | How to verify | Est |
+|---|---|---|---|---|
+| D1 | **Session memory** — `conversation_id` UUID minted client-side, persisted in localStorage. Supabase `coach_messages` table stores role + content + created_at. On chat load, last 10 messages re-hydrated. | `coach_messages` table, `lib/memory.ts`, `app/api/chat/route.ts`, `app/page.tsx` | Refresh browser mid-conversation; prior turns reappear | 3h |
+| D2 | **Live corpus refresh cron** — Vercel Cron weekly `git pull` of n8n-docs, diff vs `coach_documents.updated_at`, re-embed changed files only, upsert. Log delta count. | `app/api/cron/refresh-corpus/route.ts`, `vercel.json` cron entry, `AUTOMATIONS.md` row | Manual trigger ran once; check `coach_documents` has fresh `updated_at` for changed files only | 2h |
+| D3 | **`/stats` page** — public read-only stats. Counts (questions answered, workflows debugged), p50/p95 latency from chat logs, top 10 queries (PII-stripped, just bag-of-words frequency). | `app/stats/page.tsx`, `coach_metrics` view or RPC | Page loads, numbers match Supabase | 2h |
+| D4 | **Multi-tenant scaffold** — per-tenant config: corpus_slug, brand_color, sample_prompts. URL pattern `/c/[slug]`. Default `/c/n8n` = current. Postgres FK on `coach_documents.tenant_id`. | Supabase migration (tenant_id columns + RLS), `app/c/[slug]/page.tsx`, `lib/tenant-config.ts` | Create `/c/test` with 5 dummy docs, isolated from n8n corpus | 4h |
+| D5 | **Multimodal screenshot input** — accept image upload (drag/drop in chat input). Send to Sonnet 4.6 vision. Use case: paste screenshot of broken n8n node config instead of JSON. | `app/api/chat/route.ts`, `app/page.tsx` (file input) | Upload 3 real n8n screenshots; agent identifies node + issue | 4h |
+
+**Phase D exit gate:** all D items shipped. Each one is independent — can ship as separate PRs.
+
+---
+
+## Phase A — Merchandising (3-5h, ship last, depends on B+C output)
+
+**Goal:** Make the upgraded artifact visible and conversion-optimized for Upwork prospects.
+
+| # | Task | Files | How to verify | Est |
+|---|---|---|---|---|
+| A1 | **Pre-loaded broken workflows** — 3 one-click buttons on empty state, each pastes a deliberately-broken workflow JSON. ("Webhook missing credential", "Broken expression reference", "Schedule trigger misconfigured".) | `app/page.tsx`, `data/sample-workflows.ts` | Click each button → debug mode fires → diagnosis cards render | 1h |
+| A2 | **Public counter / social proof** — header chip: "Answered N questions · Debugged M workflows." Reads from `coach_metrics`. Auto-refresh every 30s. | `app/page.tsx`, RPC | Chip shows live numbers | 30m |
+| A3 | **Case study page on tamasdemeter.com** — published at `tamasdemeter.com/portfolio/n8n-coach`. Includes: hero, 30-second pitch, problem-solution, architecture diagram (reuse `n8n-workflow-coach.svg`), 3 demo gifs/screenshots, eval metrics from Phase B4, Loom embed, "build this for your team" CTA. | `business/website/tamasdemeter-website/app/portfolio/n8n-workflow-coach/page.tsx` (likely exists; needs content rewrite for v2) | Page renders, all assets load, CTA links to fit-call URL | 2h |
+| A4 | **Updated Loom script + recording** — rewrite `loom-script.md` to reflect v2: validator findings, structured cards, writeback. 90s budget. User records, sends URL. | `loom-script.md`, then `business/website/tamasdemeter-website/.../page.tsx` `<iframe>` | Embed loads on case-study page; mobile responsive | 1h script + user recording time |
+| A5 | **Fit-call CTA** — "Want this for your team's docs/workflows?" button on coach landing page + case study page, links to Calendly / scheduling URL. | `app/page.tsx`, case study page | Click → scheduling page opens | 30m |
+
+**Phase A exit gate:** Tamas can paste `coach.tamasdemeter.com` into an Upwork proposal and the link does the selling.
+
+---
+
+## Risks (v2)
+
+| Risk | Likelihood | Mitigation |
+|---|---|---|
+| Reranker latency makes the experience feel slower than v1 | Medium | Measure before/after; if > 200ms added, switch to `rerank-2.5-lite` (4M tokens/min, cheaper) |
+| Hybrid search query complexity breaks Supabase RPC compilation | Medium | Start with simple weighted-sum RPC; advanced merge as a follow-up if needed |
+| n8n node schema source unstable across n8n versions | High | Pin to a specific n8n release tag; document the version in `coach_node_schemas.source_version` |
+| Tool-use loop hits 6-call cap on real debug queries | Medium | Cap is configurable; observe via Vercel logs first 50 prod debug turns, tune |
+| Expression parser scope creep | High | Subset: support `={{ $json.X }}`, `={{ $node["Name"].json.X }}`, `={{ $now }}`, and `={{ $('Name').first().json.X }}`. Don't parse arbitrary JS. |
+| Validator false positives erode trust | High | Every finding has a `severity` field; UI surfaces "error" loud, "warn" muted, "info" collapsed by default |
+| Phase A waits on Phase C output → window for proposals slips | Low | Phase B alone is a measurable improvement; can use Phase B link in proposals if Phase C drags |
+
+## v2 Time log (start row, append as work progresses)
+
+| Phase / Task | Start | End | Duration | Est | Notes |
+|---|---|---|---|---|---|
+| v2 planning | 2026-05-11 [add time] | 2026-05-11 [add time] | [add] | 60m | Sparring session + idea #018 saved + phase plan committed to plan.md |
+
+## v2 Estimate totals
+
+- Phase B: 8-10h
+- Phase C: 12-16h
+- Phase D: 10-15h
+- Phase A: 3-5h + user Loom recording
+- **Total: 33-46h** across 2-3 weeks at 2-3h/day
+
+## Pick-up state (for next session)
+
+Next session starts with **Phase B, Task B1 (Voyage rerank-2.5 integration)**. Pre-reqs:
+1. Confirm DNS fixed by user (or note "still broken, work continues; verify last")
+2. Open `reference/api-references/voyage-api.md` § Rerank for the exact request shape
+3. Open `business/automations-lab/builds/n8n-coach-chatbot/lib/rag.ts` — that's where the reranker call slots in
+4. Smoke test: `tsx scripts/test-rag.ts` should still pass before any changes
+
+If Phase B1 reveals the reranker is significantly slowing the experience, fall back to `rerank-2.5-lite` and note in decision log.

@@ -1,8 +1,19 @@
-import { streamText, convertToModelMessages, smoothStream, type UIMessage } from "ai";
+import {
+  streamText,
+  convertToModelMessages,
+  smoothStream,
+  type UIMessage,
+  type SystemModelMessage,
+} from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { retrieve, formatContext } from "@/lib/rag";
 import { detectWorkflow, DEBUG_SYSTEM } from "@/lib/debug-mode";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { N8N_VOCAB_PRIMER } from "@/lib/cache-padding";
+
+const EPHEMERAL_CACHE = {
+  anthropic: { cacheControl: { type: "ephemeral" as const } },
+};
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -70,17 +81,39 @@ export async function POST(req: Request) {
   const topSim = retrieved[0]?.similarity ?? 0;
   const onTopic = workflow ? true : topSim >= OFF_TOPIC_THRESHOLD;
 
-  let system: string;
-  if (workflow) {
-    system = `${DEBUG_SYSTEM}\n\n<workflow nodes="${workflow.nodeCount}">\n${workflow.prettyJson}\n</workflow>\n\n<retrieved_docs>\n${formatContext(retrieved)}\n</retrieved_docs>`;
-  } else if (onTopic) {
-    system = `${BASE_SYSTEM}\n\n<retrieved_docs>\n${formatContext(retrieved)}\n</retrieved_docs>`;
+  const mode = workflow ? "debug" : onTopic ? "answer" : "redirect";
+
+  let system: string | SystemModelMessage[];
+  if (mode === "debug" && workflow) {
+    system = [
+      {
+        role: "system",
+        content: `${N8N_VOCAB_PRIMER}\n\n${DEBUG_SYSTEM}`,
+        providerOptions: EPHEMERAL_CACHE,
+      },
+      {
+        role: "system",
+        content: `<workflow nodes="${workflow.nodeCount}">\n${workflow.prettyJson}\n</workflow>\n\n<retrieved_docs>\n${formatContext(retrieved)}\n</retrieved_docs>`,
+      },
+    ];
+  } else if (mode === "answer") {
+    system = [
+      {
+        role: "system",
+        content: `${N8N_VOCAB_PRIMER}\n\n${BASE_SYSTEM}`,
+        providerOptions: EPHEMERAL_CACHE,
+      },
+      {
+        role: "system",
+        content: `<retrieved_docs>\n${formatContext(retrieved)}\n</retrieved_docs>`,
+      },
+    ];
   } else {
     system = REDIRECT_SYSTEM;
   }
 
   console.log(
-    `[chat] mode=${workflow ? "debug" : onTopic ? "answer" : "redirect"} top_sim=${topSim.toFixed(3)} nodes=${workflow?.nodeCount ?? 0} query="${semanticQuery.slice(0, 80)}"`
+    `[chat] mode=${mode} top_sim=${topSim.toFixed(3)} nodes=${workflow?.nodeCount ?? 0} query="${semanticQuery.slice(0, 80)}"`
   );
 
   const modelMessages = await convertToModelMessages(messages);
@@ -91,6 +124,12 @@ export async function POST(req: Request) {
     messages: modelMessages,
     temperature: 0.3,
     experimental_transform: smoothStream({ delayInMs: 15, chunking: "word" }),
+    onFinish: ({ usage }) => {
+      const d = usage.inputTokenDetails;
+      console.log(
+        `[chat] usage mode=${mode} input=${usage.inputTokens ?? 0} output=${usage.outputTokens ?? 0} cache_write=${d?.cacheWriteTokens ?? 0} cache_read=${d?.cacheReadTokens ?? 0}`
+      );
+    },
   });
 
   return result.toUIMessageStreamResponse();
