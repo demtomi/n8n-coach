@@ -58,7 +58,14 @@ User query
 
 ## How it was built
 
-The full build plan, time log, and healing patches live in [`plan.md`](./plan.md). Built in a single weekend sitting using the B.U.I.L.D. framework.
+Built in a single weekend sitting. The build plan and time log are kept privately.
+
+## Eval
+
+`npm run eval` POSTs the **deployed** `/api/chat` and scores what comes back — it does not
+reimplement the app's prompt or router, and it stamps every report with the commit the
+endpoint was running. Reports land in [`evals/reports/`](./evals/reports); read that folder's
+README before quoting any number, including the ones committed there.
 
 ## Run locally
 
@@ -74,18 +81,27 @@ npm run dev
 
 ### Required env vars
 
+See `.env.local.example`. The deployed app carries three:
+
 ```
 ANTHROPIC_API_KEY=
 VOYAGE_API_KEY=
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
+COACH_DATABASE_URL=      # scoped `coach_app` Postgres role, via the Supavisor pooler
 ```
+
+`COACH_DATABASE_URL` is deliberately NOT a `service_role` key. The app's DB role holds
+EXECUTE on exactly three functions and **zero table grants**, so a bug in the public,
+unauthenticated endpoint cannot read anything it was not built to read. Do not put a
+`service_role` key in app code.
+
+`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` are admin-only: `scripts/embed-corpus.ts` uses
+them from a laptop to build the index. They are not set in production.
 
 ### Supabase setup
 
-Apply the two migrations (see `plan.md` § T3 and T10):
-1. `coach_chatbot_v1_tables` — tables + pgvector + `coach_match_documents` RPC
-2. `coach_rate_limit_fn` — rate-limiting Postgres function
+Apply the migrations in [`migrations/`](./migrations) in filename order. They create the
+`coach_*` tables + pgvector + the `coach_match_documents` RPC, the rate-limit / spend-ceiling
+functions, and the scoped `coach_app` role the app connects as.
 
 ## License
 

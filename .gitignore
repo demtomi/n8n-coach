@@ -44,3 +44,15 @@ next-env.d.ts
 
 # local caches
 .cache/
+
+# Internal planning + security context. NOT for the public repo.
+# These carry the build roadmap, sales positioning, the Supabase project layout and the
+# credential-hardening narrative (incl. an unrotated key and where it reaches). They are
+# read by the agent from disk; nothing in the app imports them.
+# Removing them here does NOT undo the exposure -- git history still holds every version.
+CLAUDE.md
+AGENTS.md
+plan.md
+phase-b-execution-plan.md
+loom-script.md
+HARDENING-STATUS.md
