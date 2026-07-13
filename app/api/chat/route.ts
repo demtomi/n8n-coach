@@ -56,11 +56,39 @@ Reply with exactly ONE short sentence that:
 
 Do NOT suggest external websites, tools, or services. Do NOT try to be helpful on the off-topic subject. Do NOT apologize at length.`;
 
-function text(status: number, body: string) {
+function text(status: number, body: string, extra?: Record<string, string>) {
   return new Response(body, {
     status,
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
+    headers: { "Content-Type": "text/plain; charset=utf-8", ...extra },
   });
+}
+
+/**
+ * What this build IS. Read lazily — a module-scope env read breaks the Vercel build.
+ *
+ * Every response carries it so a measurement can be attributed to a specific deploy.
+ * The eval harness records it in its report: that is the control that stops a number
+ * from being quoted against code that was never shipped.
+ *
+ * It must never GUESS. This project deploys with `vercel deploy --prod`, not a git push,
+ * and VERCEL_GIT_COMMIT_SHA is only guaranteed on git-connected deployments. Reporting
+ * "local" from a Vercel instance would make a production measurement indistinguishable
+ * from a laptop one — the exact confusion this header exists to prevent. An unknown build
+ * says so out loud, and the eval refuses to accept it as an attributed number.
+ */
+function buildSha(): string {
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA;
+  if (sha) return sha.slice(0, 7);
+  return process.env.VERCEL ? "vercel-nogit" : "local";
+}
+
+// Header-safe: ids are corpus slugs, but a header value must never carry CR/LF or a
+// stray comma, so anything outside the slug alphabet is dropped rather than escaped.
+function docIdsHeader(retrieved: { id: string }[]): string {
+  return retrieved
+    .map((r) => r.id.replace(/[^A-Za-z0-9._~-]/g, ""))
+    .filter(Boolean)
+    .join(",");
 }
 
 export async function POST(req: Request) {
@@ -101,13 +129,11 @@ export async function POST(req: Request) {
   // fail-closed round trip. Nothing above this line costs money. Everything below it does.
   const gate = await checkAndReserve(ipHashFromRequest(req), totalChars(messages));
   if (!gate.ok) {
-    return new Response(gate.reason, {
-      status: gate.status,
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "X-RateLimit-Minute-Used": String(gate.minuteUsed),
-        "X-RateLimit-Day-Used": String(gate.dayUsed),
-      },
+    return text(gate.status, gate.reason, {
+      "X-RateLimit-Minute-Used": String(gate.minuteUsed),
+      "X-RateLimit-Day-Used": String(gate.dayUsed),
+      "X-Coach-Gate": gate.code,
+      "X-Coach-Build": buildSha(),
     });
   }
 
@@ -211,5 +237,18 @@ export async function POST(req: Request) {
     },
   });
 
-  return result.toUIMessageStreamResponse();
+  // What the endpoint ACTUALLY did, reported to the caller. The eval harness scores mode
+  // routing and retrieval from these headers instead of re-deriving them, which is what
+  // let a shadow implementation drift away from the deployed one and still publish numbers.
+  // Nothing here is secret: doc ids are public docs.n8n.io pages. The similarity/rerank
+  // SCORES are deliberately not exposed — they would hand an attacker a live readout for
+  // tuning text past the off-topic threshold.
+  return result.toUIMessageStreamResponse({
+    headers: {
+      "X-Coach-Mode": mode,
+      "X-Coach-Docs": docIdsHeader(retrieved),
+      "X-Coach-Nodes": String(workflow?.nodeCount ?? 0),
+      "X-Coach-Build": buildSha(),
+    },
+  });
 }

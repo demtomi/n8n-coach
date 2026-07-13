@@ -65,9 +65,23 @@ export function reserveCents(inputChars: number): number {
   });
 }
 
+export type GateRefusalCode = "rate_minute" | "rate_day" | "budget" | "unavailable";
+
 export type GateResult =
   | { ok: true; minuteUsed: number; dayUsed: number; spentCents: number; reservedCents: number }
-  | { ok: false; status: number; reason: string; minuteUsed: number; dayUsed: number };
+  | {
+      ok: false;
+      status: number;
+      // The human sentence the caller sees.
+      reason: string;
+      // The machine-readable reason, surfaced as X-Coach-Gate. A caller (the eval harness)
+      // must be able to tell "you are going too fast, wait" from "the ceiling is spent" —
+      // the first is safe to retry, the second must abort the run rather than silently
+      // report a partial result as a full one.
+      code: GateRefusalCode;
+      minuteUsed: number;
+      dayUsed: number;
+    };
 
 const MESSAGES: Record<string, string> = {
   rate_minute: "Too many requests this minute. Try again in a moment.",
@@ -110,6 +124,7 @@ export async function checkAndReserve(
       ok: false,
       status: 503,
       reason: "The coach is briefly unavailable. Try again in a moment.",
+      code: "unavailable",
       minuteUsed: 0,
       dayUsed: 0,
     };
@@ -123,6 +138,7 @@ export async function checkAndReserve(
       ok: false,
       status: 503,
       reason: "The coach is briefly unavailable. Try again in a moment.",
+      code: "unavailable",
       minuteUsed: 0,
       dayUsed: 0,
     };
@@ -139,10 +155,17 @@ export async function checkAndReserve(
         `[budget] DAILY CEILING HIT: ${spentCents.toFixed(1)}c >= ${dailyBudgetCents()}c. Refusing until UTC midnight.`
       );
     }
+    // An UNKNOWN reason code degrades to "budget", the non-retryable one. Guessing
+    // "rate_minute" would invite a caller to retry a refusal it does not understand.
+    const code: GateRefusalCode =
+      reason === "rate_minute" || reason === "rate_day" || reason === "budget"
+        ? reason
+        : "budget";
     return {
       ok: false,
       status: 429,
       reason: MESSAGES[reason] ?? MESSAGES.budget,
+      code,
       minuteUsed,
       dayUsed,
     };

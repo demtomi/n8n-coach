@@ -1,4 +1,3 @@
-import type { RagResult } from "@/lib/rag";
 import Anthropic from "@anthropic-ai/sdk";
 
 export type EvalQuery = {
@@ -14,7 +13,7 @@ export type RetrievalScore = {
   recall_at_5: number | null;
   mrr_at_5: number | null;
   top_doc_id: string | null;
-  top_similarity: number | null;
+  retrieved_doc_ids: string[];
 };
 
 export type ModeRoutingScore = {
@@ -29,16 +28,23 @@ export type CitationValidityScore = {
   validity_rate: number;
 };
 
-export function scoreRetrieval(q: EvalQuery, retrieved: RagResult[]): RetrievalScore {
-  const top5 = retrieved.slice(0, 5);
-  const ids = top5.map((r) => r.id);
+/**
+ * Score the docs the DEPLOYED endpoint actually retrieved, reported over `X-Coach-Docs`.
+ *
+ * It used to take a RagResult[] the harness fetched itself by calling retrieve() with its
+ * own idea of the semantic query — which is not what the app sends (a workflow paste with
+ * no prose goes in as "debug this n8n workflow", never as the raw JSON). Those numbers
+ * described the harness, not the app.
+ */
+export function scoreRetrieval(q: EvalQuery, retrievedIds: string[]): RetrievalScore {
+  const ids = retrievedIds.slice(0, 5);
 
   if (q.expected_doc_ids.length === 0) {
     return {
       recall_at_5: null,
       mrr_at_5: null,
       top_doc_id: ids[0] ?? null,
-      top_similarity: top5[0]?.similarity ?? null,
+      retrieved_doc_ids: ids,
     };
   }
 
@@ -58,7 +64,7 @@ export function scoreRetrieval(q: EvalQuery, retrieved: RagResult[]): RetrievalS
     recall_at_5: recall,
     mrr_at_5: mrr,
     top_doc_id: ids[0] ?? null,
-    top_similarity: top5[0]?.similarity ?? null,
+    retrieved_doc_ids: ids,
   };
 }
 
