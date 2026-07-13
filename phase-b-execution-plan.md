@@ -37,6 +37,14 @@
 
 ## B1 results (2026-05-25, same session)
 
+> **⚠️ 2026-07-13: every number in this section and the next was produced by an eval that
+> measured a SHADOW APP, not `/api/chat`.** Fix 6 (commit `0adb25f`) re-pointed the harness at
+> the real endpoint. The retrieval and mode-routing figures below survived re-measurement
+> unchanged (retrieval is deterministic, and the gold set never exercises the path where the
+> two diverged) — but the faithfulness figure and the "zero contradictions" headline did not:
+> the real app scores **0.828**, not 0.745. See `evals/reports/README.md` for the full
+> shadow-vs-real table, and `HARDENING-STATUS.md` § 6 for the current baseline.
+
 Baseline pre-B1 + B1 (Voyage rerank-2.5) shipped same day. Comparison on 30-query gold-set:
 
 | Metric | Pre-B1 | Post-B1 | Δ |

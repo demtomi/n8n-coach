@@ -50,6 +50,46 @@ Fixes 1-4 from the council, all verified end-to-end against a live dev server an
    credential), and an unreachable DB still returns `503` with no Anthropic spend — the
    fail-closed gate survives the driver swap.
 
+## Done (commit 0adb25f, deployed)
+
+6. **The eval measures the deployed endpoint.** `evals/run.ts` is now an HTTP client of
+   `/api/chat` and nothing else — no system prompt, no mode classifier, no `retrieve()` call
+   of its own. The endpoint reports what it actually did (`X-Coach-Mode`, `X-Coach-Docs`,
+   `X-Coach-Nodes`, `X-Coach-Build`), and the harness scores that. Rerank/similarity SCORES
+   are deliberately not exposed: they would be a live readout for tuning text past the
+   off-topic gate. `X-Coach-Build` never guesses — a Vercel instance that cannot name its
+   commit says `vercel-nogit`, and the runner refuses to attribute that report to a change.
+
+   **First real baseline: `evals/reports/2026-07-13T19-36-20-endpoint-baseline.*`**, 30
+   queries against `coach.tamasdemeter.com` running build `0adb25f`. What the shadow app got
+   wrong, and what it got right by luck, is tabulated in `evals/reports/README.md`. Summary:
+
+   - **Faithfulness 0.828** (shadow said 0.745). The shadow UNDERSTATED the app — its prompt
+     had no vocab primer and an 800-token ceiling against the app's 2,500. Clears the ≥0.80
+     soft floor for the first time, on a number that finally describes the app.
+   - **Contradictions 0/95 after adjudication** (1 raw). The single flagged contradiction was
+     the judge faulting the app for saying "Execute Sub-workflow" where the gold fact said
+     "Execute Workflow" — n8n renamed the node, the app cited the correct docs URL, the
+     ORACLE was stale. Label fixed in `queries.json`; that row re-measures 4s/0p/0u/**0c**.
+     The hard safety gate holds — but note it was never actually being measured before.
+   - **Recall@5 0.778 / MRR@5 0.657** — bit-identical to the shadow report. Not vindication:
+     retrieval is deterministic and the gold set never exercises the one path where the two
+     diverge (a bare workflow paste with no prose). Still below the 0.85 exit gate.
+   - **Citation validity 0.818 = 36/44 links.** The old 0.785 was a mean of PER-QUERY rates,
+     an estimator that scores a perfect 1.0 for an answer that cites nothing — so it rewarded
+     the app for refusing. Per link, the old run was 0.824. **8 of 44 emitted docs.n8n.io
+     links (18%) still point at URLs that are not in the corpus.** Real, live, unchanged.
+   - **Mode-routing 0.933 (28/30). The two failures are both off-topic queries that reached
+     doc-grounded ANSWER mode** — a generic Python question and a "how does n8n compare to
+     Zapier" question. Off-topic refusal rate is 3/5. The porous-threshold note below is now
+     a measured fact, not a worry.
+
+   Three metric-integrity bugs in the new harness were caught by a `/code-review high` pass
+   before it shipped: the citation mean that rewarded refusals; a silently-ignored `--no-gen`
+   that would have spent real money on production off a command believed to be free; and a
+   gate refusal the runner did not understand being written up as a full report instead of
+   aborting.
+
 ## Still open (each its own session)
 
 5b. **Rotate the shared `claudecode` secret key.** GATED ON OWNER — not yet done. The coach
@@ -58,12 +98,22 @@ Fixes 1-4 from the council, all verified end-to-end against a live dev server an
    ops-dashboard, website), so it is zero-downtime only if done as mint-new → roll every
    consumer → verify green → delete old. Enumerate consumers before touching anything.
 
-6. **Re-point the eval at the real endpoint.** `evals/run.ts` reimplements its own system
-   prompt + mode classifier, so every published metric describes a shadow app, not what is
-   deployed. Make the runner POST the real `/api/chat`. Until then, NO number from this repo
-   is fit for a public claim (recall@5 0.778, faithfulness 0.745, "0 contradictions" all
-   describe the shadow app; citation validity was 0.785, i.e. ~21% of emitted doc links are
-   not in the corpus).
+6b. **What the first honest run surfaced.** Not a blocker for fix 7, but this is what stands
+   between these numbers and a public quality claim:
+   - **REAL DEFECT: 18% of emitted doc links are not in the corpus** (8 of 44). The model
+     writes plausible `docs.n8n.io` URLs it cannot ground. A prospect who clicks one gets a
+     404 from the demo that is supposed to prove the retrieval works. Cheap fix: strip or
+     rewrite any link not in `data/corpus.json` post-generation. Honest fix: stop the model
+     inventing URLs at all — make it cite by source index and resolve the URL server-side.
+   - **NOT a defect: the 2 mode-routing "failures" are label disputes, not leaks.** Both
+     off-topic queries that reached ANSWER mode produce CORRECT output. `rdr-03` ("read a CSV
+     in Python") answers only the n8n part and says so — exactly what `BASE_SYSTEM` instructs
+     for a partially-n8n question. `rdr-04` ("Zapier or Make instead of n8n?") routes to
+     answer mode and then refuses in prose anyway. The 2026-05-25 session called this label
+     noise and was right. The residual cost is **COGS, not safety**: both spend a retrieval +
+     a full answer-mode Sonnet call to produce what the cheap redirect path would have.
+     Mode accuracy 0.933 is therefore bounded by contested labels, not by app behaviour —
+     and the labels must not be quietly rewritten to flatter the metric.
 
 7. **Technical Journal re-skin + UX fixes.** Retire the dark/Instrument-Serif theme for the
    bone+pine brand. UX debt from the impeccable audit (18/40): the `<h1>` masthead is wired
@@ -75,9 +125,10 @@ Fixes 1-4 from the council, all verified end-to-end against a live dev server an
 
 ## Residual notes
 
-- Off-topic gate threshold (0.25 sim / 0.30 rerank) is porous at the margin: borderline
-  off-topic text can reach doc-grounded ANSWER mode (which refuses to leave n8n by prompt,
-  so it is not a free-LLM proxy, but it is a tuning question). Belongs with fix 6.
+- Off-topic gate threshold (0.25 sim / 0.30 rerank) is porous at the margin. **No longer a
+  worry — measured: 2 of the 5 off-topic gold queries reach doc-grounded ANSWER mode.** The
+  answer prompt still refuses to leave n8n, so it is not a free-LLM proxy, but it is spending
+  a full Sonnet call on questions it should refuse for free. Now tracked as 6b.
 - `MAX_OUTPUT_TOKENS` is 2,500. Watch for truncated debug diagnoses on large workflows.
 
 - **The coach still shares Postgres COMPUTE with the CRM** (fix 5 removed the credential

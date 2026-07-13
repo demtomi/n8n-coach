@@ -1,0 +1,110 @@
+{
+  "summary": {
+    "target": "https://coach.tamasdemeter.com/api/chat",
+    "build": "0adb25f",
+    "build_attributed": true,
+    "started_at": "2026-07-13T19:50:11.535Z",
+    "finished_at": "2026-07-13T19:50:41.253Z",
+    "n": 1,
+    "judge_enabled": true,
+    "mode_accuracy": 1,
+    "refusal_rate": null,
+    "mean_recall_at_5": null,
+    "mean_mrr_at_5": null,
+    "mean_faithfulness_llm": 1,
+    "faithfulness_verdict_counts": {
+      "supported": 4,
+      "partial": 0,
+      "unsupported": 0,
+      "contradicted": 0,
+      "total": 4
+    },
+    "citation_validity": 1,
+    "citation_urls_found": 2,
+    "citation_urls_valid": 2
+  },
+  "results": [
+    {
+      "id": "ans-12-subworkflow-data",
+      "query": "How do I pass data into a subworkflow and get results back?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": null,
+        "mrr_at_5": null,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__executeworkflow",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__executeworkflow",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__toolworkflow",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__executeworkflowtrigger",
+          "docs__workflows__subworkflow-conversion",
+          "docs__workflows__executions__custom-executions-data"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Use the Execute Sub-workflow node (formerly named Execute Workflow) to call the subworkflow",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer clearly states that the Execute Sub-workflow node is used to call the subworkflow, and even notes the former name 'Execute Workflow' in parentheses, directly matching the expected fact."
+          },
+          {
+            "fact": "Items passed to Execute Workflow become the subworkflow's input",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer clearly explains that items from the parent workflow are passed to the subworkflow as input, either all at once or one per execution depending on the Mode setting, and that the subworkflow's Trigger node receives this data."
+          },
+          {
+            "fact": "The subworkflow must start with an Execute Workflow Trigger node",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that the subworkflow 'must start with an Execute Sub-workflow Trigger node to receive the call,' directly conveying the required fact."
+          },
+          {
+            "fact": "The subworkflow's last node output is returned to the calling workflow",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that the subworkflow's last node output becomes the output of the Execute Sub-workflow node in the parent workflow, directly conveying the expected fact."
+          }
+        ],
+        "supported": 4,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 2,
+        "urls_valid": 2,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Here's how data flows between a parent workflow and a subworkflow:\n\n## Setup: Two nodes required\n\n1. **Parent workflow**: uses the [Execute Sub-workflow](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executeworkflow/) node to call the subworkflow.\n2. **Subworkflow**: must start with an [Execute Sub-workflow Trigger](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executeworkflowtrigger/) node to receive the call.\n\n---\n\n## Passing data IN\n\nIn the **Execute Sub-workflow** node:\n\n- Set **Source** → **Database** and pick your subworkflow from the list (or enter its ID).\n- Once selected, **Workflow Inputs** appear automatically — these are driven by the input schema you define in the subworkflow's Execute Sub-workflow Trigger node.\n- Fill in or map values for each input field. You can use expressions like `={{ $json.fieldName }}` to pass dynamic data.\n\nIf the subworkflow's trigger is set to **\"Accept all data\"** mode, the input fields won't appear — the parent's items are passed through as-is.\n\n---\n\n## Getting data OUT\n\nThe subworkflow returns data to the parent via its **last node's output**. Whatever items the final node emits become the output of the Execute Sub-workflow node in the parent workflow.\n\nTo be explicit about what you return, end your subworkflow with a **Set** node (or **Edit Fields**) that shapes the output to exactly the fields you want.\n\n---\n\n## Execution mode\n\nIn the Execute Sub-workflow node, set **Mode**:\n- **Run once with all items** — passes all parent items into one subworkflow execution.\n- **Run once for each item** — executes the subworkflow separately for each input item.\n\n---\n\n## Wait for results\n\nBy default, the parent waits for the subworkflow to finish. You can turn off **Wait for Sub-Workflow Completion** (under node options) if you want fire-and-forget behavior — but then you won't get any return data back.",
+      "nodes": 0,
+      "build": "0adb25f",
+      "latency_ms": 14307
+    }
+  ]
+}

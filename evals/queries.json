@@ -157,7 +157,7 @@
       "mode": "answer",
       "expected_doc_ids": [],
       "expected_facts": [
-        "Use the Execute Workflow node to call the subworkflow",
+        "Use the Execute Sub-workflow node (formerly named Execute Workflow) to call the subworkflow",
         "Items passed to Execute Workflow become the subworkflow's input",
         "The subworkflow must start with an Execute Workflow Trigger node",
         "The subworkflow's last node output is returned to the calling workflow"
