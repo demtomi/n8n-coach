@@ -13,13 +13,27 @@ function tryParse(text: string): unknown | null {
   }
 }
 
+// A genuine n8n workflow, not merely any object with a `nodes` key.
+//
+// This IS a security boundary, not just a nicety. A detected workflow is trusted as
+// on-topic and routed to debug mode WITHOUT passing the off-topic similarity gate, so
+// "detected" must be hard to forge. The loose old check (any array under `nodes`) let
+// `{"nodes":[]}` appended to any prompt skip the gate and turn the coach into a free
+// public Sonnet proxy.
+//
+// Real n8n nodes carry a namespaced `type` string with a dot: `n8n-nodes-base.set`,
+// `@n8n/n8n-nodes-langchain.agent`, `n8n-nodes-<community>.foo`. Require a non-empty
+// nodes array where at least one node is an object with such a type. `{"nodes":[]}` and
+// `{"nodes":[{"n":1}]}` both fail this; a pasted real export passes it.
 function looksLikeWorkflow(obj: unknown): obj is { nodes: unknown[] } {
-  return (
-    typeof obj === "object" &&
-    obj !== null &&
-    "nodes" in obj &&
-    Array.isArray((obj as { nodes: unknown }).nodes)
-  );
+  if (typeof obj !== "object" || obj === null) return false;
+  const nodes = (obj as { nodes?: unknown }).nodes;
+  if (!Array.isArray(nodes) || nodes.length === 0) return false;
+  return nodes.some((n) => {
+    if (!n || typeof n !== "object") return false;
+    const type = (n as { type?: unknown }).type;
+    return typeof type === "string" && /[a-z0-9]\.[a-z]/i.test(type);
+  });
 }
 
 function findBalancedJson(text: string): { raw: string; start: number; end: number } | null {
