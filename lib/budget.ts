@@ -1,17 +1,5 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { db, num } from "./db";
 import { MAX_OUTPUT_TOKENS } from "./limits";
-
-let _supabase: SupabaseClient | null = null;
-function supabase(): SupabaseClient {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    );
-  }
-  return _supabase;
-}
 
 /**
  * The global daily spend ceiling, in cents.
@@ -102,14 +90,22 @@ export async function checkAndReserve(
 ): Promise<GateResult> {
   const reserved = reserveCents(inputChars);
 
-  const { data, error } = await supabase().rpc("coach_check_and_reserve", {
-    p_ip_hash: ipHash,
-    p_ceiling_cents: dailyBudgetCents(),
-    p_reserve_cents: reserved,
-  });
+  let row:
+    | { allowed: boolean; reason: string; minute_used: number; day_used: number; spend_cents: string }
+    | undefined;
 
-  if (error) {
-    console.error("[budget] gate RPC FAILED — refusing request (fail closed)", error);
+  try {
+    const rows = await db()`
+      select allowed, reason, minute_used, day_used, spend_cents
+      from coach_check_and_reserve(
+        ${ipHash}::text,
+        ${num(dailyBudgetCents())}::numeric,
+        ${num(reserved)}::numeric
+      )
+    `;
+    row = rows[0] as typeof row;
+  } catch (err) {
+    console.error("[budget] gate query FAILED — refusing request (fail closed)", err);
     return {
       ok: false,
       status: 503,
@@ -119,13 +115,25 @@ export async function checkAndReserve(
     };
   }
 
-  const row = Array.isArray(data) ? data[0] : data;
-  const minuteUsed = row?.minute_used ?? 0;
-  const dayUsed = row?.day_used ?? 0;
-  const spentCents = Number(row?.spend_cents ?? 0);
+  // A gate that returns no row told us nothing about what we have spent, and unknown must
+  // mean unsafe. Same branch as a thrown error.
+  if (!row) {
+    console.error("[budget] gate returned no row — refusing request (fail closed)");
+    return {
+      ok: false,
+      status: 503,
+      reason: "The coach is briefly unavailable. Try again in a moment.",
+      minuteUsed: 0,
+      dayUsed: 0,
+    };
+  }
 
-  if (!row?.allowed) {
-    const reason: string = row?.reason ?? "budget";
+  const minuteUsed = row.minute_used ?? 0;
+  const dayUsed = row.day_used ?? 0;
+  const spentCents = Number(row.spend_cents ?? 0);
+
+  if (!row.allowed) {
+    const reason: string = row.reason;
     if (reason === "budget") {
       console.error(
         `[budget] DAILY CEILING HIT: ${spentCents.toFixed(1)}c >= ${dailyBudgetCents()}c. Refusing until UTC midnight.`
@@ -153,18 +161,21 @@ export async function checkAndReserve(
  */
 export async function settleUsage(reservedCents: number, u: Usage): Promise<void> {
   const actual = costCents(u);
-  const { error } = await supabase().rpc("coach_settle_usage", {
-    p_reserved_cents: reservedCents,
-    p_input_tokens: u.inputTokens,
-    p_output_tokens: u.outputTokens,
-    p_cache_write_tokens: u.cacheWriteTokens,
-    p_cache_read_tokens: u.cacheReadTokens,
-    p_actual_cents: actual,
-  });
 
-  if (error) {
+  try {
+    await db()`
+      select coach_settle_usage(
+        ${num(reservedCents)}::numeric,
+        ${num(u.inputTokens)}::bigint,
+        ${num(u.outputTokens)}::bigint,
+        ${num(u.cacheWriteTokens)}::bigint,
+        ${num(u.cacheReadTokens)}::bigint,
+        ${num(actual)}::numeric
+      )
+    `;
+  } catch (err) {
     // Loud on purpose. A silent failure here leaves the (pessimistic) reservation in
     // place, which is safe for the wallet but means the ledger reads high.
-    console.error("[budget] settle FAILED — the reservation stands, ledger reads high", error);
+    console.error("[budget] settle FAILED — the reservation stands, ledger reads high", err);
   }
 }

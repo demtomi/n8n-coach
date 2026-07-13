@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { db, num } from "./db";
 import { rerank } from "./rerank";
 
 export type RagResult = {
@@ -13,18 +13,6 @@ export type RagResult = {
 };
 
 const RERANK_POOL_SIZE = 50;
-
-let _supabase: SupabaseClient | null = null;
-function supabase(): SupabaseClient {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    );
-  }
-  return _supabase;
-}
 
 async function embedQuery(text: string): Promise<number[]> {
   const res = await fetch("https://api.voyageai.com/v1/embeddings", {
@@ -48,12 +36,15 @@ async function embedQuery(text: string): Promise<number[]> {
 
 export async function retrieve(query: string, topK = 5): Promise<RagResult[]> {
   const embedding = await embedQuery(query);
-  const { data, error } = await supabase().rpc("coach_match_documents", {
-    query_embedding: embedding,
-    match_count: RERANK_POOL_SIZE,
-  });
-  if (error) throw new Error(`rag retrieve failed: ${error.message}`);
-  const pool = (data ?? []) as RagResult[];
+
+  // JSON.stringify of a number[] is already a valid pgvector literal: [0.1,0.2,...]
+  // The row generic is load-bearing: without it a column rename in a future migration
+  // would silently yield undefined citations instead of a compile error.
+  const pool = await db()<RagResult[]>`
+    select id, title, category, docs_url, github_url, content, similarity
+    from coach_match_documents(${JSON.stringify(embedding)}::vector, ${num(RERANK_POOL_SIZE)}::int)
+  `;
+
   if (pool.length === 0) return [];
 
   const docs = pool.map((p) => `${p.title}\n\n${p.content}`);

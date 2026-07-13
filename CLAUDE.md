@@ -23,7 +23,9 @@ Next.js 16, React 19, Tailwind 4, TypeScript, Vercel AI SDK v6, Claude Sonnet 4.
 
 - **Nested git repo.** This folder has its own `.git`. The outer `demtomi/claude-code` repo tracks `plan.md`, `loom-script.md`, and the nested `.git` reference only.
 - **Local git email:** `dev@tamasdemeter.com` (per-repo config, matches Vercel team-validation requirement).
-- **Env vars:** `.env.local` (gitignored). Template at `.env.local.example`. Vercel prod has the same 4 keys: `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+- **Env vars:** `.env.local` (gitignored). Template at `.env.local.example`. **Vercel prod carries 3 keys: `ANTHROPIC_API_KEY`, `VOYAGE_API_KEY`, `COACH_DATABASE_URL`** (+ optional `COACH_DAILY_BUDGET_CENTS`). `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` are **admin-only, local-only** — `scripts/embed-corpus.ts` uses them; the deployed app does not, and they are NOT set in Vercel.
+- **The app's DB credential is scoped and cannot read the CRM (fix 5, 2026-07-13).** It connects as the `coach_app` Postgres role over the Supavisor pooler (`lib/db.ts`), holding EXECUTE on exactly `coach_match_documents` / `coach_check_and_reserve` / `coach_settle_usage` and **no table grants** — `select * from prospects` and even `select * from coach_documents` are `permission denied`. It previously held the shared project's `service_role` key, which bypassed RLS on every CRM table. Never reintroduce a service_role key into app code. See `migrations/2026-07-13-coach-app-scoped-role.sql`.
+- **TLS to Postgres pins `Supabase Root 2021 CA`** (`lib/supabase-ca.ts`). Never use `ssl: "require"` with postgres.js — it means `rejectUnauthorized: false`, i.e. any certificate is accepted.
 - **Supabase tables prefixed `coach_*`** to avoid collision with `prospects`, `agents`, etc. in the shared project (`lxxkxqhriunbouvkzncj`).
 - **Next.js 16 quirks:** `middleware.ts` → `proxy.ts`, `convertToModelMessages` returns a Promise in AI SDK v6. See `AGENTS.md`.
 - **Module-scope env reads break Vercel builds.** Use lazy-singleton pattern for any SDK client (see `lib/rag.ts`, `lib/rate-limit.ts`).
