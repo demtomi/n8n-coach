@@ -22,14 +22,41 @@ Fixes 1-4 from the council, all verified end-to-end against a live dev server an
    its namespaced n8n node types, not any `nodes[]` key, so `{"nodes":[]}` no longer forces
    debug mode; it falls through to the off-topic similarity gate like any other text.
 
+## Done (commit 8b714e4, deployed)
+
+5. **The app no longer holds a service_role key.** Its DB credential is now the `coach_app`
+   Postgres role, reached over the Supavisor pooler (`lib/db.ts`, off supabase-js):
+   EXECUTE on `coach_match_documents` / `coach_check_and_reserve` / `coach_settle_usage`,
+   and **zero table grants**. Verified against the live DB — as this role,
+   `select * from prospects` is `permission denied for table prospects`, and so is
+   `select * from coach_documents`. TLS pins `Supabase Root 2021 CA`
+   (`lib/supabase-ca.ts`); postgres.js's `ssl: "require"` means `rejectUnauthorized: false`,
+   which would have been weaker than the HTTPS it replaced.
+
+   **The own-project plan died on a fact, not a preference.** Supabase caps free projects at
+   2 **per user** (not per org — a new org does not help), and both slots are load-bearing
+   (`dts-projects`, `upwork-copilot`). Custom-role API keys — the other route to a scoped
+   credential without new code — are **Pro-gated** (`402`). Native Postgres auth was the only
+   free path to the same credential isolation. An own-project remains the upgrade if the
+   coach ever takes real traffic; ~USD 25/mo Pro + ~USD 10/mo compute is the price.
+
+   Migration: `migrations/2026-07-13-coach-app-scoped-role.sql`. Note it makes
+   `coach_match_documents` SECURITY DEFINER **and revokes EXECUTE from PUBLIC in the same
+   file** — a DEFINER function left open to PUBLIC would hand the anon key an RLS bypass.
+
+   Verified through the real HTTP path on `coach.tamasdemeter.com`, not a typecheck:
+   grounded answers with correct citations, off-topic gate still refuses, oversized body
+   still `413`, ledger records real token usage (so all three functions run on the new
+   credential), and an unreachable DB still returns `503` with no Anthropic spend — the
+   fail-closed gate survives the driver swap.
+
 ## Still open (each its own session)
 
-5. **Own Supabase project + rotate the key.** The app still holds
-   `SUPABASE_SERVICE_ROLE_KEY` for the SHARED business project `lxxkxqhriunbouvkzncj`
-   (CRM, agents). Stand up a dedicated free-tier project, dump/restore the `coach_*` schema
-   (5 tables + these functions), move the app env, then DELETE + ROTATE the shared key.
-   Note: the spend-ceiling migration was applied to the shared project, so it comes along
-   in the dump/restore.
+5b. **Rotate the shared `claudecode` secret key.** GATED ON OWNER — not yet done. The coach
+   no longer uses it, but that key sat in a public app's Vercel env for 81 days, and root
+   `.env` carries the same value. Rotation is estate-wide (root `.env`, VPS agents,
+   ops-dashboard, website), so it is zero-downtime only if done as mint-new → roll every
+   consumer → verify green → delete old. Enumerate consumers before touching anything.
 
 6. **Re-point the eval at the real endpoint.** `evals/run.ts` reimplements its own system
    prompt + mode classifier, so every published metric describes a shadow app, not what is
@@ -52,3 +79,17 @@ Fixes 1-4 from the council, all verified end-to-end against a live dev server an
   off-topic text can reach doc-grounded ANSWER mode (which refuses to leave n8n by prompt,
   so it is not a free-LLM proxy, but it is a tuning question). Belongs with fix 6.
 - `MAX_OUTPUT_TOKENS` is 2,500. Watch for truncated debug diagnoses on large workflows.
+
+- **The coach still shares Postgres COMPUTE with the CRM** (fix 5 removed the credential
+  blast radius, not the resource one). A hammered public endpoint is a noisy neighbour to
+  the business DB. The rate limiter and the spend ceiling bound it; an own Supabase project
+  is what would eliminate it. Revisit if the coach ever takes real traffic.
+
+- **New failure mode from the pooled TCP connection** (fix 5). `lib/db.ts` caches a
+  connection across invocations; Vercel freezes the instance between requests, so a socket
+  can die while frozen and surface as a gate error on thaw → the fail-closed branch returns
+  `503` to a legitimate user. Safe direction, but it is a real availability cost that the
+  old stateless-HTTP client did not have. A retry is **not** trivially safe:
+  `coach_check_and_reserve` is not idempotent, so retrying a query that actually committed
+  double-reserves. Any retry must be restricted to errors raised *before* the query is sent.
+  Not yet observed in production — watch the logs for `[budget] gate query FAILED`.
