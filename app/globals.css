@@ -1,85 +1,114 @@
 @import "tailwindcss";
 
+/* DTS "Technical Journal" — source of truth: reference/brand/DESIGN-SYSTEM.md */
 :root {
-  --bg: #0c0c0e;
-  --bg-elevated: #151519;
-  --text: #f0ede8;
-  --text-dim: #9a948c;
-  --accent: #3d9b8f;
-  --accent-dim: #2a6b63;
-  --highlight: #d4a574;
-  --border: #222226;
+  --paper: #eef0ee;
+  --ink: #1b2a2a;
+  --muted: #586663;
+  --line: #cfd6d2;
+  --pine: #0f5c52;
+  --live: #1f8a5b;
+  --grid: #d6ddd8;
+  --tint: #e0eae8;
+  --danger: #a23a2a;
 }
 
 @theme inline {
-  --color-bg: var(--bg);
-  --color-bg-elevated: var(--bg-elevated);
-  --color-text: var(--text);
-  --color-text-dim: var(--text-dim);
-  --color-accent: var(--accent);
-  --color-highlight: var(--highlight);
-  --color-border: var(--border);
-  --font-sans: var(--font-geist-sans);
-  --font-serif: var(--font-instrument-serif);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-pine: var(--pine);
+  --color-live: var(--live);
+  --color-tint: var(--tint);
+  --color-danger: var(--danger);
+  --font-serif: var(--font-newsreader);
+  --font-mono: var(--font-plex-mono);
 }
 
 html,
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-newsreader), Georgia, serif;
+  font-size: 18px;
+  line-height: 1.55;
 }
 
-/* Markdown content styling */
+/* Graph-paper substrate — the "systems builder" texture. */
+.graph {
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 26px 26px;
+  background-position: -1px -1px;
+}
+
+/* Mono eyebrow / label. Colour is NOT set here: an unlayered rule outranks Tailwind's
+   layered utilities, so a `text-danger` on a `.kicker` would silently lose. */
+.kicker {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Answer body. */
 .prose-chat {
-  font-size: 17px;
-  line-height: 1.65;
+  font-size: 18px;
+  line-height: 1.6;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 .prose-chat p {
-  margin: 0 0 0.9em 0;
+  margin: 0 0 0.85em 0;
 }
 .prose-chat p:last-child {
   margin-bottom: 0;
 }
 .prose-chat a {
-  color: var(--accent);
+  color: var(--pine);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
   text-decoration-thickness: 1px;
-  transition: color 0.15s;
 }
 .prose-chat a:hover {
-  color: var(--highlight);
+  background: var(--tint);
+}
+/* `[src:1,2]` resolves to two links in a row. Without a gap they read as one word
+   ("MergeCompare Datasets") — a rendering artefact, not what the server emitted. */
+.prose-chat a + a {
+  margin-left: 0.35em;
 }
 .prose-chat code {
-  background: var(--bg-elevated);
-  padding: 0.1em 0.35em;
-  border-radius: 4px;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.9em;
-  color: var(--highlight);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.82em;
+  background: var(--tint);
+  padding: 0.12em 0.35em;
+  color: var(--ink);
 }
 .prose-chat pre {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--pine);
   padding: 0.9em 1em;
-  border-radius: 8px;
   overflow-x: auto;
-  font-size: 0.88em;
+  font-size: 0.8em;
   margin: 1em 0;
 }
 .prose-chat pre code {
   background: transparent;
   padding: 0;
-  color: var(--text);
+  font-size: 1em;
 }
 .prose-chat ul,
 .prose-chat ol {
   margin: 0.6em 0 0.9em 0;
-  padding-left: 1.4em;
+  padding-left: 1.3em;
 }
 .prose-chat li {
   margin: 0.25em 0;
@@ -93,26 +122,35 @@ body {
 .prose-chat h1,
 .prose-chat h2,
 .prose-chat h3 {
-  font-family: var(--font-instrument-serif), serif;
-  font-weight: 400;
-  margin: 1em 0 0.4em 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 1.1em 0 0.4em 0;
   line-height: 1.2;
 }
 .prose-chat h1 {
-  font-size: 1.5em;
+  font-size: 1.4em;
 }
 .prose-chat h2 {
-  font-size: 1.3em;
+  font-size: 1.25em;
 }
 .prose-chat h3 {
-  font-size: 1.15em;
+  font-size: 1.1em;
 }
 .prose-chat strong {
-  color: var(--highlight);
   font-weight: 600;
 }
+.prose-chat table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+.prose-chat th,
+.prose-chat td {
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  text-align: left;
+}
 
-/* Textarea auto-sizing and scrollbar */
 textarea {
   field-sizing: content;
 }
@@ -124,9 +162,19 @@ textarea {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  background: var(--line);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
+  background: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
