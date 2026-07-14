@@ -25,7 +25,7 @@
       "query": "How do I add OAuth2 authentication to an HTTP Request node?",
       "mode": "answer",
       "expected_doc_ids": [
-        "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index"
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__README"
       ],
       "expected_facts": [
         "Set Authentication to Predefined Credential Type or Generic Credential Type",
@@ -78,7 +78,9 @@
       "id": "ans-05-expression-now",
       "query": "How do I get yesterday's date as a formatted string in an n8n expression?",
       "mode": "answer",
-      "expected_doc_ids": [],
+      "expected_doc_ids": [
+        "docs__build__work-with-data__handle-special-data-types__work-with-dates-and-times"
+      ],
       "expected_facts": [
         "Use $now (Luxon DateTime)",
         "Subtract one day with .minus({ days: 1 })",
@@ -89,15 +91,14 @@
         "expression",
         "vector_intent"
       ],
-      "out_of_corpus": true,
-      "gold_note": "out-of-corpus: no doc in the 332-doc corpus contains $now / toFormat / Luxon date expressions (docs/code/expressions is not ingested). Grade as a refusal probe, not on fact recall."
+      "gold_note": "in-corpus as of the 2026-07-14 rebuild (D2). Was out-of-corpus against the 332-doc corpus; the section it needs is now ingested."
     },
     {
       "id": "ans-06-webhook-response",
       "query": "My webhook returns 'Workflow was started' instead of my data. How do I send a custom response?",
       "mode": "answer",
       "expected_doc_ids": [
-        "docs__integrations__builtin__core-nodes__n8n-nodes-base__webhook__index",
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__webhook__README",
         "docs__integrations__builtin__core-nodes__n8n-nodes-base__respondtowebhook"
       ],
       "expected_facts": [
@@ -116,7 +117,7 @@
       "query": "How do I run a workflow every Monday at 9 AM?",
       "mode": "answer",
       "expected_doc_ids": [
-        "docs__integrations__builtin__core-nodes__n8n-nodes-base__scheduletrigger__index"
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__scheduletrigger__README"
       ],
       "expected_facts": [
         "Add a Schedule Trigger node",
@@ -167,7 +168,7 @@
       "query": "What's the difference between 'Run Once for All Items' and 'Run Once for Each Item' in the Code node?",
       "mode": "answer",
       "expected_doc_ids": [
-        "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__index"
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__README"
       ],
       "expected_facts": [
         "Run Once for All Items: code runs once, $input.all() returns all incoming items",
@@ -185,7 +186,7 @@
       "query": "How do I paginate through more than 100 results from the Pipedrive API in a workflow?",
       "mode": "answer",
       "expected_doc_ids": [
-        "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index"
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__README"
       ],
       "expected_facts": [
         "Use HTTP Request node with Pagination enabled",
@@ -221,7 +222,9 @@
       "id": "ans-13-credentials-encryption",
       "query": "Where are n8n credentials stored and how are they encrypted?",
       "mode": "answer",
-      "expected_doc_ids": [],
+      "expected_doc_ids": [
+        "docs__deploy__host-n8n__configure-n8n__basic-configuration__configuration-examples__set-a-custom-encryption-key"
+      ],
       "expected_facts": [
         "Credentials are stored in the database (SQLite or Postgres)",
         "Encrypted at rest using the N8N_ENCRYPTION_KEY environment variable",
@@ -232,8 +235,7 @@
         "security",
         "ops"
       ],
-      "out_of_corpus": true,
-      "gold_note": "out-of-corpus: N8N_ENCRYPTION_KEY appears in 0 docs (docs/hosting + docs/credentials are not ingested). Grade as a refusal probe."
+      "gold_note": "in-corpus as of the 2026-07-14 rebuild (D2). Was out-of-corpus against the 332-doc corpus; the section it needs is now ingested."
     },
     {
       "id": "ans-14-set-vs-edit-fields",
@@ -257,7 +259,7 @@
       "query": "How do I make a node not stop the workflow when it errors?",
       "mode": "answer",
       "expected_doc_ids": [
-        "docs__workflows__components__nodes"
+        "docs__build__understand-workflows__workflow-components__work-with-nodes"
       ],
       "expected_facts": [
         "Open the node settings (gear icon)",
@@ -269,14 +271,14 @@
         "common_gotcha",
         "intermediate"
       ],
-      "gold_note": "labelled 2026-07-14 from data/corpus.json by content, NOT from what the app retrieved"
+      "gold_note": "relabelled 2026-07-14: docs/workflows/components/nodes.md moved to docs/build/understand-workflows/workflow-components/work-with-nodes.md upstream. Same content (Always Output Data + On Error -> Continue)."
     },
     {
       "id": "ans-16-langchain-agent-memory",
       "query": "How do I give an AI Agent node conversation memory across requests?",
       "mode": "answer",
       "expected_doc_ids": [
-        "docs__integrations__builtin__cluster-nodes__root-nodes__n8n-nodes-langchain__agent__index"
+        "docs__integrations__builtin__cluster-nodes__root-nodes__n8n-nodes-langchain__agent__README"
       ],
       "expected_facts": [
         "Attach a Memory sub-node to the AI Agent node",
@@ -293,7 +295,10 @@
       "id": "ans-17-google-sheets-update",
       "query": "How do I update an existing Google Sheets row instead of appending a new one?",
       "mode": "answer",
-      "expected_doc_ids": [],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__app-nodes__n8n-nodes-base__googlesheets__README",
+        "docs__integrations__builtin__app-nodes__n8n-nodes-base__googlesheets__sheet-operations"
+      ],
       "expected_facts": [
         "Use Google Sheets node, Operation: Update or Update Row",
         "Set Matching Columns to the column n8n uses to find the row",
@@ -304,8 +309,7 @@
         "common_question",
         "platform_specific"
       ],
-      "out_of_corpus": true,
-      "gold_note": "out-of-corpus: the corpus contains ZERO app-node docs, so there is no Google Sheets action-node page to retrieve. Grade as a refusal probe."
+      "gold_note": "in-corpus as of the 2026-07-14 rebuild (D2). Was out-of-corpus against the 332-doc corpus; the section it needs is now ingested."
     },
     {
       "id": "ans-18-binary-data",
@@ -330,7 +334,9 @@
       "id": "ans-19-self-host-queue-mode",
       "query": "Should I run n8n in queue mode and what does that require?",
       "mode": "answer",
-      "expected_doc_ids": [],
+      "expected_doc_ids": [
+        "docs__deploy__host-n8n__configure-n8n__scaling__enable-queue-mode"
+      ],
       "expected_facts": [
         "Queue mode separates main process from worker processes",
         "Requires Redis as the message broker",
@@ -341,8 +347,7 @@
         "ops",
         "advanced"
       ],
-      "out_of_corpus": true,
-      "gold_note": "out-of-corpus: no hosting/queue-mode/scaling docs. Grade as a refusal probe (existing 6c finding)."
+      "gold_note": "in-corpus as of the 2026-07-14 rebuild (D2). Was out-of-corpus against the 332-doc corpus; the section it needs is now ingested."
     },
     {
       "id": "ans-20-filter-empty",
@@ -383,7 +388,7 @@
       "query": "This loop never ends. Debug: {\"nodes\":[{\"name\":\"Schedule Trigger\",\"type\":\"n8n-nodes-base.scheduleTrigger\",\"position\":[200,300],\"parameters\":{\"rule\":{\"interval\":[{\"field\":\"minutes\",\"minutesInterval\":5}]}}},{\"name\":\"HTTP Request\",\"type\":\"n8n-nodes-base.httpRequest\",\"position\":[400,300],\"parameters\":{\"url\":\"https://api.example.com/items\",\"options\":{\"pagination\":{\"paginationMode\":\"updateAParameterInEachRequest\",\"parameters\":{\"parameter\":[{\"name\":\"page\",\"value\":\"={{ $pageNumber }}\"}]},\"paginationCompleteWhen\":\"receiveSpecificStatusCodes\",\"statusCodesWhenComplete\":\"404\"}}}}],\"connections\":{\"Schedule Trigger\":{\"main\":[[{\"node\":\"HTTP Request\",\"type\":\"main\",\"index\":0}]]}}}",
       "mode": "debug",
       "expected_doc_ids": [
-        "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index"
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__README"
       ],
       "expected_facts": [
         "Pagination Complete When set to status code 404 means the loop only stops on 404",
@@ -399,7 +404,7 @@
       "query": "My webhook returns 'Workflow was started' instead of my data: {\"nodes\":[{\"name\":\"Webhook\",\"type\":\"n8n-nodes-base.webhook\",\"position\":[200,300],\"parameters\":{\"path\":\"hello\",\"httpMethod\":\"POST\"}},{\"name\":\"Set\",\"type\":\"n8n-nodes-base.set\",\"position\":[400,300],\"parameters\":{\"values\":{\"string\":[{\"name\":\"greeting\",\"value\":\"hi\"}]}}}],\"connections\":{\"Webhook\":{\"main\":[[{\"node\":\"Set\",\"type\":\"main\",\"index\":0}]]}}}",
       "mode": "debug",
       "expected_doc_ids": [
-        "docs__integrations__builtin__core-nodes__n8n-nodes-base__webhook__index",
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__webhook__README",
         "docs__integrations__builtin__core-nodes__n8n-nodes-base__respondtowebhook"
       ],
       "expected_facts": [
@@ -434,7 +439,7 @@
       "query": "Code node throws an error. Help: {\"nodes\":[{\"name\":\"Manual Trigger\",\"type\":\"n8n-nodes-base.manualTrigger\",\"position\":[200,300],\"parameters\":{}},{\"name\":\"Code\",\"type\":\"n8n-nodes-base.code\",\"position\":[400,300],\"parameters\":{\"jsCode\":\"const items = items.map(i => ({ json: { doubled: i.json.n * 2 } }));\\nreturn items;\"}}],\"connections\":{\"Manual Trigger\":{\"main\":[[{\"node\":\"Code\",\"type\":\"main\",\"index\":0}]]}}}",
       "mode": "debug",
       "expected_doc_ids": [
-        "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__index"
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__README"
       ],
       "expected_facts": [
         "The variable items is being declared and used in the same line (self-reference)",
@@ -500,6 +505,19 @@
         "redirect",
         "off_topic"
       ]
+    },
+    {
+      "id": "ans-21-out-of-corpus-release-notes",
+      "query": "What changed in the n8n 1.40 release, and which breaking changes does it contain?",
+      "mode": "answer",
+      "expected_doc_ids": [],
+      "expected_facts": [],
+      "tags": [
+        "out_of_corpus",
+        "refusal_probe"
+      ],
+      "out_of_corpus": true,
+      "gold_note": "PERMANENT out-of-corpus probe (added 2026-07-14). docs/changelog is deliberately excluded from TARGETS, so release-history is unanswerable from sources by construction. Grade ONLY on whether the app declines beyond its sources; it has no expected_facts, so it must never contribute to fact recall. Do not 'fix' this row by embedding the changelog."
     }
   ]
 }

@@ -53,7 +53,20 @@ export function costCents(u: Usage): number {
 // What we put on the books BEFORE doing the work. Deliberately pessimistic: assume the
 // model writes to its output ceiling. Over-reserving is safe (we refund at settle time);
 // under-reserving is how a ceiling gets overshot.
-const PROMPT_OVERHEAD_TOKENS = 5_000; // vocab primer + system rules + 5 retrieved doc chunks
+// vocab primer + system rules + the 5 retrieved chunks.
+//
+// This constant is the ONLY thing standing in for retrieved context, because the gate runs
+// BEFORE retrieval on purpose (nothing above it may spend money, so it cannot know what
+// retrieval will return). That makes it a promise the ingestion side has to keep.
+//
+// It was 5,000, sized when the corpus was one-row-per-page with a 1.6 KB median. The 2026-07
+// corpus rebuild pulled in pages up to 80 KB (~20k tokens EACH), which would have blown this
+// estimate by an order of magnitude and let the daily ceiling under-book every request that
+// retrieved one. `scripts/build-corpus.ts` now caps a chunk at MAX_CHUNK_CHARS = 6,000, so
+// the worst case is bounded by construction: 5 × 6,000 chars ≈ 8.6k tokens, plus ~3k for the
+// primer and system rules. 12,000 covers it with room, and over-reserving is the safe
+// direction — settle refunds the difference.
+const PROMPT_OVERHEAD_TOKENS = 12_000;
 const CHARS_PER_TOKEN = 3.5; // conservative for JSON-heavy text
 
 export function reserveCents(inputChars: number): number {

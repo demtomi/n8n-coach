@@ -36,15 +36,36 @@ export type CitationValidityScore = {
  * no prose goes in as "debug this n8n workflow", never as the raw JSON). Those numbers
  * described the harness, not the app.
  */
+/**
+ * A chunk id back to the page it came from: `..._merge__c02` → `..._merge`.
+ *
+ * Gold labels name a PAGE ("the Merge node doc"), because that is the claim being made about
+ * retrieval. Chunk boundaries are an implementation detail of ingestion — re-chunking the
+ * corpus must not silently zero out 15 gold rows, which is exactly what comparing raw chunk
+ * ids to page-level gold would do.
+ */
+export function baseDocId(id: string): string {
+  return id.replace(/__c\d{2,}$/, "");
+}
+
 export function scoreRetrieval(q: EvalQuery, retrievedIds: string[]): RetrievalScore {
-  const ids = retrievedIds.slice(0, 5);
+  // What the endpoint ACTUALLY returned, recorded verbatim. Scoring happens on the
+  // page-normalised view, but the report keeps the raw chunk ids: "the Merge page was
+  // retrieved" and "chunk 2 of the Merge page was retrieved" are different facts, and the
+  // second is the one you need when diagnosing WHY a query missed.
+  const raw = retrievedIds.slice(0, 5);
+
+  // Normalise chunks to their page, then dedupe: two chunks of the Merge page are ONE
+  // retrieved document, not two. Deduping AFTER the top-5 cut (not before) keeps this a
+  // measurement of what the app actually put in front of the model.
+  const ids = [...new Set(raw.map(baseDocId))];
 
   if (q.expected_doc_ids.length === 0) {
     return {
       recall_at_5: null,
       mrr_at_5: null,
       top_doc_id: ids[0] ?? null,
-      retrieved_doc_ids: ids,
+      retrieved_doc_ids: raw,
     };
   }
 
@@ -64,7 +85,7 @@ export function scoreRetrieval(q: EvalQuery, retrievedIds: string[]): RetrievalS
     recall_at_5: recall,
     mrr_at_5: mrr,
     top_doc_id: ids[0] ?? null,
-    retrieved_doc_ids: ids,
+    retrieved_doc_ids: raw,
   };
 }
 
