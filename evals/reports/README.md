@@ -172,3 +172,86 @@ reason. They must NOT be graded on fact recall, and they must NOT be relabelled 
 faithfulness mean. Until D2 embeds the missing sections they are the only refusal probes the
 suite has — and once D2 lands they stop being probes, so a permanent out-of-corpus probe
 (pinned to something that will never enter the corpus) has to replace them.
+
+## 2026-07-14 — D2: the corpus rebuild, measured (`2026-07-14T12-55-27-endpoint`, build `888c6ad`)
+
+332 docs → 938 pages → 1,217 chunks (app-nodes, deploy, build, connect, administer added;
+`builtin/credentials` deliberately held back). 31 queries against the deployed endpoint.
+
+### Read this before quoting recall
+
+**The headline `0.800` is NOT comparable to the `0.778` in the run above it.** D2 moved the
+denominator twice: it labelled 4 rows that had no gold (they had no doc to find; now they do),
+and n8n's upstream `index.md` → `README.md` rename changed 9 gold ids. Comparing the printed
+numbers compares two different question sets.
+
+Scored like-for-like — same 25 labelled rows, same gold, a canonical page key that folds
+`__cNN` chunks and the `index`/`README` rename:
+
+| | `f85d6ef` (332 docs) | `888c6ad` (1,217 chunks) |
+| --- | --- | --- |
+| recall@5 | 0.6400 | **0.8000** |
+| MRR@5 | 0.5400 | **0.6283** |
+
+**D2 is a real gain: +0.16 recall.** Five rows went 0.00 → 1.00 (`ans-05` dates, `ans-13`
+encryption, `ans-15` on-error, `ans-17` Google Sheets, `ans-19` queue mode) — every one of
+them a question the old corpus had NO document for. **The 0.85 exit gate is still not met.**
+
+### What it cost: one real regression, and rank dilution
+
+- `dbg-05-code-syntax` **1.00 → 0.00**. The Code node README fell out of the top 5, displaced
+  by `code__common-issues` chunks 1 and 2. Left standing as a miss. (It is arguably an oracle
+  problem — for "Code node throws an error", the *common issues* page is a defensible answer —
+  but that is a label dispute to adjudicate on evidence, not a number to quietly rewrite.)
+- `ans-09` and `dbg-04` hold recall 1.00 but drop MRR 1.00 → 0.50: the gold page is still
+  found, one rank lower, because chunks of other pages now sit above it. This is the dilution
+  cost of a 3.7× larger index, and it is what B3 (hybrid search) exists to claw back.
+
+### Contradictions: 1 raw → 0 adjudicated. The oracle was wrong, not the app.
+
+`ans-05` tripped the hard zero-contradiction floor, 3 judge passes out of 3. The gold fact said
+"Use `$now`"; the app answered with `$today`.
+
+**The app is right.** The n8n date docs it retrieved AND cited teach exactly that idiom —
+`{{$today.minus({days: 7})}}` for "seven days before the current date". `$today` is midnight of
+the current day, the correct base for a DATE; `$now.minus(...)` yields the same `yyyy-MM-dd`
+string, so both work. The fact over-specified the variable and punished the app for following
+its sources — the same shape as the `ans-12` "Execute Sub-workflow" adjudication.
+
+Re-spec'd to test what it meant to test (a Luxon DateTime builtin, either variable) and
+re-measured ALONE (`2026-07-14T13-14-23-endpoint`): **3 supported / 1 partial / 0 contradicted**.
+The floor holds. Quote it as **1 raw → 0 adjudicated**, never as a bare 0.
+
+### The faithfulness number the run printed is inflated, and it is my fault
+
+The run reports `mean_faithfulness_llm = 0.8189`. **Do not quote that.** `ans-21`, the
+out-of-corpus refusal probe added in this same session, has zero `expected_facts`, and
+`scoreFaithfulnessLLM` returned `rate: 1.0` for a row with no facts — a free perfect score for
+having nothing to prove, folded straight into the mean. Same defect as the old per-query
+citation mean that scored 1.0 for citing nothing: **a denominator that rewards failure.**
+
+Fixed: a no-facts row now scores `rate: null` and is excluded from the mean. It is graded on
+whether it REFUSED, which is the only thing it exists to test (`declinesBeyondSources` in
+`run.ts`, verified to fire on the real answer and to reject an invented one).
+
+| faithfulness | value | basis |
+| --- | --- | --- |
+| as the run printed it | 0.8189 | 26 rows — **inflated**, includes the free 1.00 |
+| probe excluded | **0.8117** | 25 fact-carrying rows, fully measured |
+| + `ans-05` oracle adjudicated | **0.8267** | 25 rows — **SPLICED**: 24 measured 12:55, `ans-05` re-measured 13:14 |
+
+The 0.8267 is an adjusted number, not a fresh full run. Say so whenever it is quoted.
+
+### Everything else
+
+- **Citation validity 1.000 (132/132).** Held through a 3.7× corpus change. Note the count rose
+  44 → 108 → 132 as the corpus grew; compare the RATE, never the count.
+- **Mode accuracy 0.903**, bounded by three CONTESTED labels, not by app behaviour. `rdr-03`
+  and `rdr-04` are the known 6d disputes. `rdr-01` (weather) is new and is a *consequence* of
+  D2: the app declined the weather lookup outright ("I can't look up live weather data") and
+  pivoted to building an n8n workflow for it, citing the OpenWeatherMap node — a page that only
+  exists now because app-nodes were ingested. That is the coach doing its job. The cost is
+  COGS (a full answer-mode call where the cheap redirect path would have done), not safety.
+- **The refusal probe works.** `ans-21` declined and invented nothing: "The retrieved
+  documentation doesn't contain any information about the n8n 1.40 release... I won't invent
+  release notes."

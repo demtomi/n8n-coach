@@ -75,6 +75,24 @@ type CoachResponse = {
   latencyMs: number;
 };
 
+/**
+ * Did the answer decline to go beyond its retrieved sources?
+ *
+ * This is the ONLY assertion the out-of-corpus probe makes, so it must not be satisfied by an
+ * answer that happens to contain a hedge while still inventing the release notes. It looks for
+ * an explicit statement that the SOURCES do not cover the question.
+ */
+function declinesBeyondSources(answer: string): boolean {
+  const a = answer.toLowerCase();
+  return (
+    /(retrieved |the )?(documentation|docs|sources?|context)[^.]{0,40}(does ?n.t|do ?n.t|doesn't|don't|cannot|can't|no information|nothing)/.test(
+      a
+    ) ||
+    /(i )?(can.t|cannot|won.t|will not)[^.]{0,60}(answer|invent|make up|fabricate)/.test(a) ||
+    /not (covered|available|present|included) in (the )?(retrieved )?(documentation|docs|sources?)/.test(a)
+  );
+}
+
 function parseArgs() {
   const args = process.argv.slice(2);
 
@@ -305,7 +323,7 @@ async function main() {
     }
 
     const faithSummary = faithfulness
-      ? `${faithfulness.supported}s/${faithfulness.partial}p/${faithfulness.unsupported}u/${faithfulness.contradicted}c (${faithfulness.rate.toFixed(2)})`
+      ? `${faithfulness.supported}s/${faithfulness.partial}p/${faithfulness.unsupported}u/${faithfulness.contradicted}c (${faithfulness.rate?.toFixed(2) ?? "n/a — no facts, refusal probe"})`
       : "-";
     console.log(
       `[eval] ${q.id} mode=${r.mode}${modeScore.correct ? "✓" : "✗"} recall@5=${retrieval?.recall_at_5?.toFixed(2) ?? "-"} faithful=${faithSummary} cite=${citation ? `${citation.urls_valid}/${citation.urls_found}` : "-"} ${r.latencyMs}ms`
@@ -319,7 +337,17 @@ async function main() {
       retrieval,
       faithfulness,
       citation,
-      refused: q.mode === "redirect" ? r.mode === "redirect" : null,
+      // A refusal is scored for the OFF-TOPIC rows (did the gate redirect?) and for the
+      // OUT-OF-CORPUS probe (did the app decline to answer beyond its sources?). They test
+      // two different properties; the probe is answer-mode by design — it is a legitimate
+      // n8n question that the corpus simply cannot support, so routing it to `answer` is
+      // correct and REFUSING INSIDE that answer is the thing being measured.
+      refused:
+        q.mode === "redirect"
+          ? r.mode === "redirect"
+          : q.out_of_corpus
+            ? declinesBeyondSources(r.answer)
+            : null,
       answer: r.answer,
       nodes: r.nodes,
       build: r.build,

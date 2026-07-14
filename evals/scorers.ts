@@ -7,6 +7,13 @@ export type EvalQuery = {
   expected_doc_ids: string[];
   expected_facts: string[];
   tags?: string[];
+  /**
+   * A legitimate n8n question the CORPUS cannot answer (docs/changelog is deliberately never
+   * ingested). It is graded ONLY on whether the app declines beyond its sources — it has no
+   * expected_facts, so it must never contribute to the faithfulness mean, and its gold doc
+   * list is empty, so it must never contribute to recall.
+   */
+  out_of_corpus?: boolean;
 };
 
 export type RetrievalScore = {
@@ -160,7 +167,8 @@ export type FaithfulnessLLMScore = {
   unsupported: number;
   contradicted: number;
   total: number;
-  rate: number;
+  /** null when the row has no facts to judge (an out-of-corpus refusal probe). */
+  rate: number | null;
 };
 
 const JUDGE_MODEL = "claude-haiku-4-5-20251001";
@@ -272,6 +280,17 @@ export async function scoreFaithfulnessLLM(args: {
   expected_facts: string[];
 }): Promise<FaithfulnessLLMScore> {
   const { query, answer, expected_facts } = args;
+  // NO FACTS MEANS NO SCORE — not a perfect one.
+  //
+  // This used to return rate 1.0. A row with nothing to prove therefore scored better than
+  // every row that actually tried, and folded that free 1.0 straight into the headline mean:
+  // the out-of-corpus probe `ans-21` lifted the reported 2026-07-14 faithfulness from 0.8117
+  // to 0.8189 by refusing to answer a question it had no sources for. That is the same defect
+  // as the old per-query citation mean that scored 1.0 for citing nothing — a denominator
+  // that rewards failure.
+  //
+  // `null` keeps the row out of `meanNonNull`. An out-of-corpus probe is graded on whether it
+  // REFUSED (see `refused` in run.ts), which is the property it exists to test.
   if (expected_facts.length === 0) {
     return {
       judgements: [],
@@ -280,7 +299,7 @@ export async function scoreFaithfulnessLLM(args: {
       unsupported: 0,
       contradicted: 0,
       total: 0,
-      rate: 1.0,
+      rate: null,
     };
   }
 

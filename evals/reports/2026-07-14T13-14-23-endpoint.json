@@ -1,0 +1,110 @@
+{
+  "summary": {
+    "target": "https://coach.tamasdemeter.com/api/chat",
+    "build": "888c6ad",
+    "build_attributed": true,
+    "started_at": "2026-07-14T13:14:23.141Z",
+    "finished_at": "2026-07-14T13:14:52.381Z",
+    "n": 1,
+    "judge_enabled": true,
+    "mode_accuracy": 1,
+    "refusal_rate": null,
+    "mean_recall_at_5": 1,
+    "mean_mrr_at_5": 0.25,
+    "mean_faithfulness_llm": 0.875,
+    "faithfulness_verdict_counts": {
+      "supported": 3,
+      "partial": 1,
+      "unsupported": 0,
+      "contradicted": 0,
+      "total": 4
+    },
+    "citation_validity": 1,
+    "citation_urls_found": 5,
+    "citation_urls_valid": 5
+  },
+  "results": [
+    {
+      "id": "ans-05-expression-now",
+      "query": "How do I get yesterday's date as a formatted string in an n8n expression?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 0.25,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__datetime",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__datetime__c01",
+          "docs__build__work-with-data__transform-data__expression-reference__datetime__c02",
+          "docs__build__work-with-data__transform-data__expression-reference__README__c04",
+          "docs__build__work-with-data__handle-special-data-types__work-with-dates-and-times__c02",
+          "docs__build__work-with-data__handle-special-data-types__work-with-dates-and-times__c01"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Use a Luxon DateTime variable: $today (midnight of the current day) or $now (the current instant)",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer accurately explains that $today is a Luxon DateTime variable representing midnight of the current day, and mentions $now as an alternative for the current instant, directly matching the expected fact."
+          },
+          {
+            "fact": "Subtract one day with .minus({ days: 1 })",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer clearly demonstrates and explains the `.minus({ days: 1 })` method as the primary approach for subtracting one day from `$today` in multiple code examples."
+          },
+          {
+            "fact": "Format with .toFormat('yyyy-MM-dd') or .toISO()",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly demonstrates both .toFormat('yyyy-MM-dd') and .toISO() as valid formatting methods, with .toISO() shown in the basic approach and .toFormat() mentioned in the Code node note, plus a table example using .format('yyyy-MM-dd')."
+          },
+          {
+            "fact": "Full expression: ={{ $now.minus({ days: 1 }).toFormat('yyyy-MM-dd') }}",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer correctly explains using `.minus({ days: 1 })` and `.toFormat()` in Code nodes, but uses `$today` in examples instead of `$now`, and doesn't explicitly state that `$now` is the preferred variable for getting the current moment with time precision."
+          }
+        ],
+        "supported": 3,
+        "partial": 1,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.875
+      },
+      "citation": {
+        "urls_found": 5,
+        "urls_valid": 5,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Here are two approaches depending on the format you need:\n\n## Basic approach — subtract 1 day from `$today`\n\n```js\n{{ $today.minus({ days: 1 }).toISO() }}\n```\nThis returns an ISO 8601 string like `2024-04-29T00:00:00.000+00:00` [Date and time with Luxon](https://docs.n8n.io/build/work-with-data/handle-special-data-types/work-with-dates-and-times/).\n\n## Custom format (e.g. DD/MM/YYYY)\n\nUse `.format()` with Luxon tokens [DateTime <a href=\"#datetime\" id=\"datetime\"></a>](https://docs.n8n.io/build/work-with-data/transform-data/expression-reference/datetime/):\n\n```js\n{{ $today.minus({ days: 1 }).format('dd/LL/yyyy') }}\n```\nReturns something like `29/04/2024`.\n\n## Other useful format examples\n\n| Expression | Example output |\n|---|---|\n| `$today.minus({ days: 1 }).format('yyyy-MM-dd')` | `2024-04-29` |\n| `$today.minus({ days: 1 }).format('MM/dd/yyyy')` | `04/29/2024` |\n| `$today.minus({ days: 1 }).toLocaleString({ month: 'long', day: 'numeric', year: 'numeric' })` | `April 29, 2024` |\n\n[Date and time with Luxon](https://docs.n8n.io/build/work-with-data/handle-special-data-types/work-with-dates-and-times/)\n\n## Key notes\n\n- `$today` is midnight of the current day, equivalent to `DateTime.now().set({ hour: 0, minute: 0, second: 0, millisecond: 0 })` [Date and time with Luxon](https://docs.n8n.io/build/work-with-data/handle-special-data-types/work-with-dates-and-times/).\n- `.format()` is a **custom n8n extension** — it works in the expressions editor (e.g. in a Set node) but **not in the Code node**. In the Code node, use `.toFormat('dd/LL/yyyy')` instead [DateTime <a href=\"#datetime\" id=\"datetime\"></a>](https://docs.n8n.io/build/work-with-data/transform-data/expression-reference/datetime/).\n- All expressions must be wrapped in `={{ ... }}` in the n8n UI.",
+      "nodes": 0,
+      "build": "888c6ad",
+      "latency_ms": 11481
+    }
+  ]
+}

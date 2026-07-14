@@ -82,7 +82,7 @@
         "docs__build__work-with-data__handle-special-data-types__work-with-dates-and-times"
       ],
       "expected_facts": [
-        "Use $now (Luxon DateTime)",
+        "Use a Luxon DateTime variable: $today (midnight of the current day) or $now (the current instant)",
         "Subtract one day with .minus({ days: 1 })",
         "Format with .toFormat('yyyy-MM-dd') or .toISO()",
         "Full expression: ={{ $now.minus({ days: 1 }).toFormat('yyyy-MM-dd') }}"
@@ -91,7 +91,7 @@
         "expression",
         "vector_intent"
       ],
-      "gold_note": "in-corpus as of the 2026-07-14 rebuild (D2). Was out-of-corpus against the 332-doc corpus; the section it needs is now ingested."
+      "gold_note": "ADJUDICATED 2026-07-14 (build 888c6ad, raw verdict: 1 contradicted). The oracle demanded $now and the app answered with $today, so the judge called it a contradiction 3 passes out of 3. The APP IS RIGHT: the n8n date docs it retrieved and cited teach exactly this idiom -- '{{$today.minus({days: 7})}}' for 'seven days before the current date'. $today is midnight of today, which is the correct base for a DATE; $now.minus(...) yields the same yyyy-MM-dd string, so both work. The fact over-specified the variable and punished the app for following its sources. Re-spec'd to test what it meant to test (a Luxon DateTime builtin), NOT relaxed to flatter the metric."
     },
     {
       "id": "ans-06-webhook-response",
