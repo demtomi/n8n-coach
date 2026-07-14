@@ -6,7 +6,7 @@ import {
 } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { retrieve, formatContext } from "@/lib/rag";
-import { detectWorkflow, DEBUG_SYSTEM } from "@/lib/debug-mode";
+import { detectWorkflow, semanticQueryFor, DEBUG_SYSTEM } from "@/lib/debug-mode";
 import { ipHashFromRequest } from "@/lib/rate-limit";
 import { checkAndReserve, settleUsage } from "@/lib/budget";
 import { N8N_VOCAB_PRIMER } from "@/lib/cache-padding";
@@ -142,9 +142,11 @@ export async function POST(req: Request) {
     });
   }
 
-  const semanticQuery = workflow
-    ? workflow.remainder || "debug this n8n workflow"
-    : query;
+  // One definition, shared with the offline tuners (lib/debug-mode.ts). For a pasted
+  // workflow this now includes the NODE TYPES, not just the prose around the JSON: the
+  // prose for a debug question routinely never names the node that is broken, which left
+  // retrieval guessing. Measured before/after in scripts/diagnose-dedupe.ts.
+  const semanticQuery = semanticQueryFor(query);
 
   let retrieved;
   try {

@@ -48,12 +48,28 @@ export async function retrieve(query: string, topK = 5): Promise<RagResult[]> {
   if (pool.length === 0) return [];
 
   const docs = pool.map((p) => `${p.title}\n\n${p.content}`);
-  const reranked = await rerank(query, docs, topK);
+  // Rerank the WHOLE pool, then take topK DISTINCT PAGES from the ranking.
+  //
+  // Chunking (D2) let one page occupy several of the five slots: a debug query spent two of
+  // them on chunks 1 and 2 of the same "common issues" page. Every duplicate is a slot no
+  // other page got, and the duplicated text is context we pay Anthropic for twice.
+  //
+  // Measured honestly: this does NOT improve recall@5 (0.8000 either way) — the rows that
+  // miss, miss for other reasons. It buys a small MRR gain and a real prompt-size saving.
+  // Do not sell it as a retrieval fix.
+  const reranked = await rerank(query, docs, pool.length);
 
-  return reranked.map((r) => ({
-    ...pool[r.index],
-    relevance_score: r.relevance_score,
-  }));
+  const seen = new Set<string>();
+  const out: RagResult[] = [];
+  for (const r of reranked) {
+    const doc = pool[r.index];
+    const page = doc.id.replace(/__c\d{2,}$/, "");
+    if (seen.has(page)) continue;
+    seen.add(page);
+    out.push({ ...doc, relevance_score: r.relevance_score });
+    if (out.length === topK) break;
+  }
+  return out;
 }
 
 /**
