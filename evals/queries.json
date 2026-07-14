@@ -6,40 +6,54 @@
       "id": "ans-01-merge-modes",
       "query": "What are the different modes of the Merge node and when should I use each?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__merge"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__merge"
+      ],
       "expected_facts": [
         "Append mode concatenates items from both inputs",
         "Combine mode merges items by position, by key, or by all-with-all (multiplex)",
         "SQL Query mode runs an in-memory SQL join across inputs",
         "Compare Datasets mode highlights differences between two inputs"
       ],
-      "tags": ["lookup_intent", "keyword_strong"]
+      "tags": [
+        "lookup_intent",
+        "keyword_strong"
+      ]
     },
     {
       "id": "ans-02-http-auth",
       "query": "How do I add OAuth2 authentication to an HTTP Request node?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index"
+      ],
       "expected_facts": [
         "Set Authentication to Predefined Credential Type or Generic Credential Type",
         "For Generic, choose OAuth2 API and configure the OAuth2 credential",
         "Token URL, Auth URL, Client ID, Client Secret are required",
         "Authorization header is added to the request automatically"
       ],
-      "tags": ["procedural"]
+      "tags": [
+        "procedural"
+      ]
     },
     {
       "id": "ans-03-loop-batch",
       "query": "How do I process items in batches of 50 with a Loop node?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__splitinbatches"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__splitinbatches"
+      ],
       "expected_facts": [
         "Use the Loop Over Items node (formerly Split In Batches)",
         "Set Batch Size to 50",
         "The done output runs after all batches complete",
         "The loop output runs once per batch"
       ],
-      "tags": ["beginner", "lookup_intent"]
+      "tags": [
+        "beginner",
+        "lookup_intent"
+      ]
     },
     {
       "id": "ans-04-if-vs-switch",
@@ -55,7 +69,10 @@
         "Use IF for binary branches",
         "Use Switch for three or more branches"
       ],
-      "tags": ["beginner", "comparison"]
+      "tags": [
+        "beginner",
+        "comparison"
+      ]
     },
     {
       "id": "ans-05-expression-now",
@@ -68,7 +85,12 @@
         "Format with .toFormat('yyyy-MM-dd') or .toISO()",
         "Full expression: ={{ $now.minus({ days: 1 }).toFormat('yyyy-MM-dd') }}"
       ],
-      "tags": ["expression", "vector_intent"]
+      "tags": [
+        "expression",
+        "vector_intent"
+      ],
+      "out_of_corpus": true,
+      "gold_note": "out-of-corpus: no doc in the 332-doc corpus contains $now / toFormat / Luxon date expressions (docs/code/expressions is not ingested). Grade as a refusal probe, not on fact recall."
     },
     {
       "id": "ans-06-webhook-response",
@@ -84,85 +106,116 @@
         "Configure response Body, Headers, and Status Code on that node",
         "Default Immediately mode is what returns the 'Workflow was started' message"
       ],
-      "tags": ["debug_intent", "common_gotcha"]
+      "tags": [
+        "debug_intent",
+        "common_gotcha"
+      ]
     },
     {
       "id": "ans-07-schedule-cron",
       "query": "How do I run a workflow every Monday at 9 AM?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__scheduletrigger__index"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__scheduletrigger__index"
+      ],
       "expected_facts": [
         "Add a Schedule Trigger node",
         "Use Mode: Custom (Cron) or Weeks",
         "Cron expression for Monday 9 AM: 0 9 * * 1",
         "The timezone is the workflow's configured timezone"
       ],
-      "tags": ["beginner"]
+      "tags": [
+        "beginner"
+      ]
     },
     {
       "id": "ans-08-aggregate-vs-items",
       "query": "How do I combine all items into a single array field?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__aggregate"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__aggregate"
+      ],
       "expected_facts": [
         "Use the Aggregate node",
         "Set Aggregate to All Item Data or Individual Fields",
         "Output is a single item containing the aggregated array",
         "Item Lists node can also concatenate but is older"
       ],
-      "tags": ["procedural"]
+      "tags": [
+        "procedural"
+      ]
     },
     {
       "id": "ans-09-error-workflow",
       "query": "How do I set up an error-handling workflow that notifies me when something fails?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__errortrigger"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__errortrigger"
+      ],
       "expected_facts": [
         "Create a new workflow starting with an Error Trigger node",
         "In each main workflow's settings, assign this workflow as the Error Workflow",
         "The Error Trigger receives execution metadata including the failed node",
         "Add notification nodes (Email, Slack, Telegram) after the Error Trigger"
       ],
-      "tags": ["intermediate"]
+      "tags": [
+        "intermediate"
+      ]
     },
     {
       "id": "ans-10-code-run-once",
       "query": "What's the difference between 'Run Once for All Items' and 'Run Once for Each Item' in the Code node?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__code__index"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__index"
+      ],
       "expected_facts": [
         "Run Once for All Items: code runs once, $input.all() returns all incoming items",
         "Run Once for Each Item: code runs per item, $input.item is the current item",
         "All Items mode is faster for batch operations",
         "Each Item mode is needed when you want to return a different number of items"
       ],
-      "tags": ["beginner", "common_question"]
+      "tags": [
+        "beginner",
+        "common_question"
+      ]
     },
     {
       "id": "ans-11-pipedrive-paginate",
       "query": "How do I paginate through more than 100 results from the Pipedrive API in a workflow?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index"
+      ],
       "expected_facts": [
         "Use HTTP Request node with Pagination enabled",
         "Set Pagination Mode to Response Contains Next URL or Update a Parameter in Each Request",
         "Pipedrive uses cursor-based pagination via start parameter",
         "Set Pagination Complete When to Empty Response or Other (response.data is empty)"
       ],
-      "tags": ["intermediate", "platform_specific"]
+      "tags": [
+        "intermediate",
+        "platform_specific"
+      ]
     },
     {
       "id": "ans-12-subworkflow-data",
       "query": "How do I pass data into a subworkflow and get results back?",
       "mode": "answer",
-      "expected_doc_ids": [],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__executeworkflow",
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__executeworkflowtrigger"
+      ],
       "expected_facts": [
         "Use the Execute Sub-workflow node (formerly named Execute Workflow) to call the subworkflow",
         "Items passed to Execute Workflow become the subworkflow's input",
         "The subworkflow must start with an Execute Workflow Trigger node",
         "The subworkflow's last node output is returned to the calling workflow"
       ],
-      "tags": ["intermediate"]
+      "tags": [
+        "intermediate"
+      ],
+      "gold_note": "labelled 2026-07-14 from data/corpus.json by content, NOT from what the app retrieved"
     },
     {
       "id": "ans-13-credentials-encryption",
@@ -175,46 +228,66 @@
         "If N8N_ENCRYPTION_KEY changes you cannot decrypt existing credentials",
         "Backup the key separately from the database"
       ],
-      "tags": ["security", "ops"]
+      "tags": [
+        "security",
+        "ops"
+      ],
+      "out_of_corpus": true,
+      "gold_note": "out-of-corpus: N8N_ENCRYPTION_KEY appears in 0 docs (docs/hosting + docs/credentials are not ingested). Grade as a refusal probe."
     },
     {
       "id": "ans-14-set-vs-edit-fields",
       "query": "I see both Set and Edit Fields in my n8n. Are they the same node?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__set"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__set"
+      ],
       "expected_facts": [
         "Edit Fields is the newer name for the Set node",
         "Functionally identical in current versions",
         "Older workflows may show Set, newer ones show Edit Fields",
         "Both have Manual Mapping and JSON modes"
       ],
-      "tags": ["common_question"]
+      "tags": [
+        "common_question"
+      ]
     },
     {
       "id": "ans-15-continue-on-fail",
       "query": "How do I make a node not stop the workflow when it errors?",
       "mode": "answer",
-      "expected_doc_ids": [],
+      "expected_doc_ids": [
+        "docs__workflows__components__nodes"
+      ],
       "expected_facts": [
         "Open the node settings (gear icon)",
         "Enable Continue On Fail or set On Error to Continue",
         "The node will output an empty item instead of stopping the workflow",
         "Use Always Output Data alongside to guarantee at least one item flows downstream"
       ],
-      "tags": ["common_gotcha", "intermediate"]
+      "tags": [
+        "common_gotcha",
+        "intermediate"
+      ],
+      "gold_note": "labelled 2026-07-14 from data/corpus.json by content, NOT from what the app retrieved"
     },
     {
       "id": "ans-16-langchain-agent-memory",
       "query": "How do I give an AI Agent node conversation memory across requests?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__cluster-nodes__root-nodes__n8n-nodes-langchain__agent__index"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__cluster-nodes__root-nodes__n8n-nodes-langchain__agent__index"
+      ],
       "expected_facts": [
         "Attach a Memory sub-node to the AI Agent node",
         "Options include Buffer Window, Postgres Chat Memory, Redis Chat Memory, Zep, Motorhead, Xata",
         "Set a session key (often $json.sessionId or chat-trigger session) to identify the conversation",
         "Buffer Window keeps only the last N messages"
       ],
-      "tags": ["ai_node", "intermediate"]
+      "tags": [
+        "ai_node",
+        "intermediate"
+      ]
     },
     {
       "id": "ans-17-google-sheets-update",
@@ -227,20 +300,31 @@
         "Provide the matching value in your input data",
         "The row is updated in place; no duplicate is created"
       ],
-      "tags": ["common_question", "platform_specific"]
+      "tags": [
+        "common_question",
+        "platform_specific"
+      ],
+      "out_of_corpus": true,
+      "gold_note": "out-of-corpus: the corpus contains ZERO app-node docs, so there is no Google Sheets action-node page to retrieve. Grade as a refusal probe."
     },
     {
       "id": "ans-18-binary-data",
       "query": "How do I attach a file from one node as an email attachment in the next node?",
       "mode": "answer",
-      "expected_doc_ids": [],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__sendemail"
+      ],
       "expected_facts": [
         "Binary data flows on the item itself under the binary key",
         "In the Email/Gmail node, enable Attachments and reference the binary field name",
         "Default binary field name is data",
         "No need to re-encode; n8n handles base64 conversion"
       ],
-      "tags": ["binary", "intermediate"]
+      "tags": [
+        "binary",
+        "intermediate"
+      ],
+      "gold_note": "labelled 2026-07-14 from data/corpus.json by content, NOT from what the app retrieved"
     },
     {
       "id": "ans-19-self-host-queue-mode",
@@ -253,44 +337,62 @@
         "Set EXECUTIONS_MODE=queue and configure QUEUE_BULL_REDIS_HOST",
         "Enables horizontal scaling of workers for high-volume workflows"
       ],
-      "tags": ["ops", "advanced"]
+      "tags": [
+        "ops",
+        "advanced"
+      ],
+      "out_of_corpus": true,
+      "gold_note": "out-of-corpus: no hosting/queue-mode/scaling docs. Grade as a refusal probe (existing 6c finding)."
     },
     {
       "id": "ans-20-filter-empty",
       "query": "My Filter node passes everything through even when the condition should drop items. What's wrong?",
       "mode": "answer",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__filter"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__filter"
+      ],
       "expected_facts": [
         "Filter conditions on string values may be type-mismatched with number expectations",
         "Use the Type option to enforce string / number / boolean comparison",
         "Empty values may evaluate as truthy in some operators",
         "Use the Looser strict option if needed, or pre-normalize with Set"
       ],
-      "tags": ["debug_intent", "common_gotcha"]
+      "tags": [
+        "debug_intent",
+        "common_gotcha"
+      ]
     },
     {
       "id": "dbg-01-merge-no-output",
       "query": "Why doesn't this workflow output anything? Here's the JSON: {\"nodes\":[{\"name\":\"Manual Trigger\",\"type\":\"n8n-nodes-base.manualTrigger\",\"position\":[200,300],\"parameters\":{}},{\"name\":\"Set A\",\"type\":\"n8n-nodes-base.set\",\"position\":[400,200],\"parameters\":{\"values\":{\"string\":[{\"name\":\"src\",\"value\":\"a\"}]}}},{\"name\":\"Set B\",\"type\":\"n8n-nodes-base.set\",\"position\":[400,400],\"parameters\":{\"values\":{\"string\":[{\"name\":\"src\",\"value\":\"b\"}]}}},{\"name\":\"Merge\",\"type\":\"n8n-nodes-base.merge\",\"position\":[600,300],\"parameters\":{\"mode\":\"combine\",\"combinationMode\":\"mergeByKey\",\"propertyName1\":\"id\",\"propertyName2\":\"id\"}}],\"connections\":{\"Manual Trigger\":{\"main\":[[{\"node\":\"Set A\",\"type\":\"main\",\"index\":0}],[{\"node\":\"Set B\",\"type\":\"main\",\"index\":0}]]},\"Set A\":{\"main\":[[{\"node\":\"Merge\",\"type\":\"main\",\"index\":0}]]},\"Set B\":{\"main\":[[{\"node\":\"Merge\",\"type\":\"main\",\"index\":1}]]}}}",
       "mode": "debug",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__merge"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__merge"
+      ],
       "expected_facts": [
         "Merge in mergeByKey mode requires both inputs to have items with the matching key field",
         "Set A and Set B output items with src field, not id",
         "Either change matching field to src or add an id field upstream"
       ],
-      "tags": ["debug"]
+      "tags": [
+        "debug"
+      ]
     },
     {
       "id": "dbg-02-loop-infinite",
       "query": "This loop never ends. Debug: {\"nodes\":[{\"name\":\"Schedule Trigger\",\"type\":\"n8n-nodes-base.scheduleTrigger\",\"position\":[200,300],\"parameters\":{\"rule\":{\"interval\":[{\"field\":\"minutes\",\"minutesInterval\":5}]}}},{\"name\":\"HTTP Request\",\"type\":\"n8n-nodes-base.httpRequest\",\"position\":[400,300],\"parameters\":{\"url\":\"https://api.example.com/items\",\"options\":{\"pagination\":{\"paginationMode\":\"updateAParameterInEachRequest\",\"parameters\":{\"parameter\":[{\"name\":\"page\",\"value\":\"={{ $pageNumber }}\"}]},\"paginationCompleteWhen\":\"receiveSpecificStatusCodes\",\"statusCodesWhenComplete\":\"404\"}}}}],\"connections\":{\"Schedule Trigger\":{\"main\":[[{\"node\":\"HTTP Request\",\"type\":\"main\",\"index\":0}]]}}}",
       "mode": "debug",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index"
+      ],
       "expected_facts": [
         "Pagination Complete When set to status code 404 means the loop only stops on 404",
         "If the API returns 200 with empty data, the loop continues forever",
         "Change Complete When to Response Is Empty or Other with an expression on response body length"
       ],
-      "tags": ["debug"]
+      "tags": [
+        "debug"
+      ]
     },
     {
       "id": "dbg-03-webhook-no-response",
@@ -305,31 +407,44 @@
         "Change Respond to When Last Node Finishes to return the Set node output",
         "Or use Respond to Webhook node for full control"
       ],
-      "tags": ["debug", "common_gotcha"]
+      "tags": [
+        "debug",
+        "common_gotcha"
+      ]
     },
     {
       "id": "dbg-04-if-misroute",
       "query": "My IF node routes everything to the false branch even when the value matches. Workflow: {\"nodes\":[{\"name\":\"Manual Trigger\",\"type\":\"n8n-nodes-base.manualTrigger\",\"position\":[200,300],\"parameters\":{}},{\"name\":\"Edit Fields\",\"type\":\"n8n-nodes-base.set\",\"position\":[400,300],\"parameters\":{\"values\":{\"string\":[{\"name\":\"count\",\"value\":\"5\"}]}}},{\"name\":\"IF\",\"type\":\"n8n-nodes-base.if\",\"position\":[600,300],\"parameters\":{\"conditions\":{\"number\":[{\"value1\":\"={{ $json.count }}\",\"operation\":\"larger\",\"value2\":3}]}}}],\"connections\":{\"Manual Trigger\":{\"main\":[[{\"node\":\"Edit Fields\",\"type\":\"main\",\"index\":0}]]},\"Edit Fields\":{\"main\":[[{\"node\":\"IF\",\"type\":\"main\",\"index\":0}]]}}}",
       "mode": "debug",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__if"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__if"
+      ],
       "expected_facts": [
         "count is set as a string '5' in Edit Fields, not a number",
         "Number comparison on a string value fails the type check",
         "Either set count as a number in Edit Fields or cast in the IF expression: ={{ Number($json.count) }}"
       ],
-      "tags": ["debug", "type_coercion"]
+      "tags": [
+        "debug",
+        "type_coercion"
+      ]
     },
     {
       "id": "dbg-05-code-syntax",
       "query": "Code node throws an error. Help: {\"nodes\":[{\"name\":\"Manual Trigger\",\"type\":\"n8n-nodes-base.manualTrigger\",\"position\":[200,300],\"parameters\":{}},{\"name\":\"Code\",\"type\":\"n8n-nodes-base.code\",\"position\":[400,300],\"parameters\":{\"jsCode\":\"const items = items.map(i => ({ json: { doubled: i.json.n * 2 } }));\\nreturn items;\"}}],\"connections\":{\"Manual Trigger\":{\"main\":[[{\"node\":\"Code\",\"type\":\"main\",\"index\":0}]]}}}",
       "mode": "debug",
-      "expected_doc_ids": ["docs__integrations__builtin__core-nodes__n8n-nodes-base__code__index"],
+      "expected_doc_ids": [
+        "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__index"
+      ],
       "expected_facts": [
         "The variable items is being declared and used in the same line (self-reference)",
         "Use $input.all() to read incoming items in the Code node",
         "Correct: const result = $input.all().map(i => ({ json: { doubled: i.json.n * 2 } })); return result;"
       ],
-      "tags": ["debug", "code_node"]
+      "tags": [
+        "debug",
+        "code_node"
+      ]
     },
     {
       "id": "rdr-01-weather",
@@ -337,7 +452,10 @@
       "mode": "redirect",
       "expected_doc_ids": [],
       "expected_facts": [],
-      "tags": ["redirect", "off_topic"]
+      "tags": [
+        "redirect",
+        "off_topic"
+      ]
     },
     {
       "id": "rdr-02-forex",
@@ -345,7 +463,10 @@
       "mode": "redirect",
       "expected_doc_ids": [],
       "expected_facts": [],
-      "tags": ["redirect", "off_topic"]
+      "tags": [
+        "redirect",
+        "off_topic"
+      ]
     },
     {
       "id": "rdr-03-generic-python",
@@ -353,7 +474,10 @@
       "mode": "redirect",
       "expected_doc_ids": [],
       "expected_facts": [],
-      "tags": ["redirect", "adjacent_tech"]
+      "tags": [
+        "redirect",
+        "adjacent_tech"
+      ]
     },
     {
       "id": "rdr-04-zapier-compare",
@@ -361,7 +485,10 @@
       "mode": "redirect",
       "expected_doc_ids": [],
       "expected_facts": [],
-      "tags": ["redirect", "competitor"]
+      "tags": [
+        "redirect",
+        "competitor"
+      ]
     },
     {
       "id": "rdr-05-recipe",
@@ -369,7 +496,10 @@
       "mode": "redirect",
       "expected_doc_ids": [],
       "expected_facts": [],
-      "tags": ["redirect", "off_topic"]
+      "tags": [
+        "redirect",
+        "off_topic"
+      ]
     }
   ]
 }

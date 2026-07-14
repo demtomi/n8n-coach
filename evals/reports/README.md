@@ -105,3 +105,70 @@ every index becomes a link, so the same answers now carry roughly 2.5× as many.
 every one of them resolves to a document that was actually retrieved for that query. It does
 NOT mean the app cites 2.5× better — it means citation is now mechanical rather than
 discretionary. Compare the RATE across builds; do not compare the counts.
+
+## 2026-07-14 — the gold set was measuring 18 of 30 rows, and the corpus is 3 of ~12 doc sections
+
+Audit of the gold set itself (no run, no spend). Two defects, one of them load-bearing.
+
+### 1. `recall@5` was computed over a partial denominator
+
+`mean_recall_at_5` uses `meanNonNull`, and `recall_at_5` is `null` for any row with an empty
+`expected_doc_ids`. **Twelve of the 30 rows had none** — the 5 redirect rows (correct: they
+have no gold) and **seven answer rows** (`ans-05`, `ans-12`, `ans-13`, `ans-15`, `ans-17`,
+`ans-18`, `ans-19`). So the reported **0.778 was 14/18**, not a number about the 30-query set,
+and the 0.85 Phase B exit gate was being judged on 60% of it. `ans-19` was documented as the
+one unlabelled row. It was one of seven.
+
+### 2. Only THREE of those seven are answerable. The other four have no doc to retrieve.
+
+Checked against `data/corpus.json` directly, not against what the app returned:
+
+| row | verdict | evidence in the corpus |
+| --- | --- | --- |
+| `ans-12` subworkflow | **labelled** | `executeworkflow` + `executeworkflowtrigger` both present |
+| `ans-15` continue-on-fail | **labelled** | `workflows/components/nodes.md` documents Always Output Data + On Error → Continue |
+| `ans-18` binary attachment | **labelled** | `sendemail.md`: "Attachments: enter the name of the binary properties…" |
+| `ans-05` `$now` expression | **out-of-corpus** | `$now` and `toFormat` appear in **0 of 332 docs** (`docs/code/expressions` was never ingested) |
+| `ans-13` credential encryption | **out-of-corpus** | `N8N_ENCRYPTION_KEY` appears in **0 docs** |
+| `ans-17` Google Sheets update | **out-of-corpus** | the corpus contains **zero app-node docs** — there is no Sheets action-node page to retrieve |
+| `ans-19` hosting / queue mode | **out-of-corpus** | no hosting/queue/worker/scaling/docker doc exists (the known 6c finding) |
+
+**The corpus is `docs/integrations` (288) + `docs/workflows` (24) + `docs/code` (20). That is
+all.** Missing wholesale: `docs/hosting`, `docs/credentials`, `docs/data` (binary data),
+`docs/flow-logic`, `docs/code/expressions`, and **every app node** (Gmail, Sheets, Slack,
+Notion…). The corpus has 107 trigger-node and 102 LangChain cluster-node pages and not one
+Google Sheets page. "No hosting docs" badly understated the gap.
+
+This also explains why `ans-05` scored **4/4 supported** on a question the corpus cannot
+answer: `mean_faithfulness` grades whether the ANSWER states the gold facts, so an answer
+generated from the model's parametric memory scores full marks while retrieval gave it
+nothing. It is fact recall wearing a groundedness label — the defect already named under 6c,
+now with a second confirmed instance.
+
+### The recomputed number
+
+Recall was **recomputed offline against the frozen `f85d6ef` report**, whose
+`retrieved_doc_ids` are already recorded per row. No re-run, no API spend: fix 7 was
+front-end only, so that report still describes the deployed retrieval.
+
+| | rows scored | recall@5 | MRR@5 |
+| --- | --- | --- | --- |
+| as reported | 18 | 0.778 | 0.657 |
+| **with the 3 new labels** | **21** | **0.8095** | **0.7421** |
+
+**The 0.85 exit gate is still NOT met.** Read the +0.03 with its bias: the rows that COULD be
+labelled are, by construction, rows where a correct doc exists — and all three turned out to
+be rows retrieval already got right (1.00/1.00 each). The labels were picked from the corpus
+by content, never from what the app retrieved; labelling gold as "whatever came back" would
+guarantee 1.0 and turn the metric into a mirror.
+
+Four rows still score **0.00 recall**, and their gold ids were verified to exist in the corpus
+(all 30 gold ids resolve), so these are genuine retrieval misses and the real target for B3
+(hybrid search): `ans-10-code-run-once`, `ans-16-langchain-agent-memory`, `dbg-01-merge-no-output`,
+`dbg-02-loop-infinite`.
+
+The four out-of-corpus rows are now flagged `out_of_corpus: true` in `queries.json` with the
+reason. They must NOT be graded on fact recall, and they must NOT be relabelled to flatter the
+faithfulness mean. Until D2 embeds the missing sections they are the only refusal probes the
+suite has — and once D2 lands they stop being probes, so a permanent out-of-corpus probe
+(pinned to something that will never enter the corpus) has to replace them.
