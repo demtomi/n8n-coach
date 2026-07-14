@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:citations": "tsx scripts/test-citations.ts",
     "eval": "tsx evals/run.ts",
     "lighthouse": "node scripts/lighthouse.mjs"
   },

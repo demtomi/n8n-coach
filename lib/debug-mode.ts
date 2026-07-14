@@ -1,3 +1,5 @@
+import { CITATION_RULE } from "./citations";
+
 export type WorkflowDetection = {
   json: string;
   prettyJson: string;
@@ -104,7 +106,8 @@ Bullet list of concrete problems. For each:
 Say so. Suggest what to verify at runtime (credentials, test data, rate limits, error-handler coverage).
 
 Rules:
-- Answer only from the retrieved n8n documentation. Cite sources as markdown links.
+- Answer only from the retrieved n8n documentation.
+${CITATION_RULE}
 - Do not invent node types, parameter names, or expressions.
 - Do not suggest external tools.
 - Be concrete, no fluff.`;

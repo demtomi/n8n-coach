@@ -11,6 +11,11 @@ import { ipHashFromRequest } from "@/lib/rate-limit";
 import { checkAndReserve, settleUsage } from "@/lib/budget";
 import { N8N_VOCAB_PRIMER } from "@/lib/cache-padding";
 import {
+  CITATION_RULE,
+  createCitationResolver,
+  citationTransform,
+} from "@/lib/citations";
+import {
   parseMessages,
   toUIMessages,
   totalChars,
@@ -42,7 +47,7 @@ const BASE_SYSTEM = `You are an n8n workflow coach. You help users understand, d
 Rules:
 - Answer using ONLY the retrieved n8n documentation below. If the answer isn't there, say so — do not invent n8n syntax, node names, or expressions.
 - Be concrete: name the exact node, show the exact expression, describe the configuration step.
-- Cite sources inline using markdown links like [Merge node](https://docs.n8n.io/...) when referencing a specific node or concept.
+${CITATION_RULE}
 - Never suggest external tools, websites, or services (no "check xe.com", no "use Google", no "try Zapier"). Stay inside the n8n world.
 - If a question is only partially about n8n, answer the n8n part and ignore the rest.
 - No fluff. No "great question." No preamble. Start with the answer.
@@ -205,6 +210,12 @@ export async function POST(req: Request) {
 
   const modelMessages = await convertToModelMessages(toUIMessages(messages));
 
+  // The model cites `[src:N]`; this resolves N to the docs_url of a source we ACTUALLY
+  // retrieved, and un-links any docs.n8n.io URL it wrote on its own. A redirect gets an
+  // EMPTY source list on purpose: it was shown no documentation, so it has no standing to
+  // link any, and a one-line refusal that emits a citation is a bug either way.
+  const resolver = createCitationResolver(mode === "redirect" ? [] : retrieved);
+
   const result = streamText({
     model: anthropic("claude-sonnet-4-6"),
     system,
@@ -212,7 +223,12 @@ export async function POST(req: Request) {
     temperature: 0.3,
     // Cap the output. Without this the per-request cost has no upper bound.
     maxOutputTokens: MAX_OUTPUT_TOKENS,
-    experimental_transform: smoothStream({ delayInMs: 15, chunking: "word" }),
+    // Resolve citations FIRST (it buffers, to see a `[src:2]` split across deltas), then
+    // smooth what it emits back into a word-by-word cadence for the UI.
+    experimental_transform: [
+      citationTransform(resolver),
+      smoothStream({ delayInMs: 15, chunking: "word" }),
+    ],
     onFinish: async ({ usage }) => {
       const d = usage.inputTokenDetails;
       const u = {
@@ -221,8 +237,16 @@ export async function POST(req: Request) {
         cacheWriteTokens: d?.cacheWriteTokens ?? 0,
         cacheReadTokens: d?.cacheReadTokens ?? 0,
       };
+      const c = resolver.stats;
       console.log(
         `[chat] usage mode=${mode} input=${u.inputTokens} output=${u.outputTokens} cache_write=${u.cacheWriteTokens} cache_read=${u.cacheReadTokens}`
+      );
+      // `stripped` is the number of URLs the model wrote in defiance of the prompt — the
+      // rate at which instruction alone would have failed. Watch it: a climb means the
+      // model is drifting back to writing links, and the mechanism (not the prompt) is
+      // what is holding the line.
+      console.log(
+        `[chat] cites mode=${mode} resolved=${c.resolved} dropped=${c.dropped} stripped=${c.stripped} passed=${c.passed}`
       );
       // Swap the reservation for what it actually cost.
       await settleUsage(gate.reservedCents, u);

@@ -56,11 +56,21 @@ export async function retrieve(query: string, topK = 5): Promise<RagResult[]> {
   }));
 }
 
+/**
+ * The model is shown the index and the title. It is NOT shown `docs_url`, on purpose.
+ *
+ * It cites `[src:N]` and `lib/citations.ts` resolves N to the real URL server-side, so the
+ * model has no use for the URL — and handing it one would leave the "it cannot invent a
+ * link" property resting on an instruction rather than on the absence of the material.
+ * A model that can read a URL can transcribe it onto the wrong claim, and a transcribed
+ * URL is in the allow-list, so the resolver would wave it through. Withholding it is what
+ * makes index-citation the only channel that exists.
+ */
 export function formatContext(results: RagResult[]): string {
   return results
     .map(
       (r, i) =>
-        `<source index="${i + 1}" title="${r.title}" url="${r.docs_url}">\n${r.content}\n</source>`
+        `<source index="${i + 1}" title="${r.title}">\n${r.content}\n</source>`
     )
     .join("\n\n");
 }
