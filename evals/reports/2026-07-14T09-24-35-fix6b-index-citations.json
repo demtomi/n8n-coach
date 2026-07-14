@@ -1,0 +1,2118 @@
+{
+  "summary": {
+    "target": "https://coach.tamasdemeter.com/api/chat",
+    "build": "f85d6ef",
+    "build_attributed": true,
+    "started_at": "2026-07-14T09:24:35.106Z",
+    "finished_at": "2026-07-14T09:38:58.053Z",
+    "n": 30,
+    "judge_enabled": true,
+    "mode_accuracy": 0.9333333333333333,
+    "refusal_rate": 0.6,
+    "mean_recall_at_5": 0.7777777777777778,
+    "mean_mrr_at_5": 0.6574074074074073,
+    "mean_faithfulness_llm": 0.8033333333333332,
+    "faithfulness_verdict_counts": {
+      "supported": 70,
+      "partial": 11,
+      "unsupported": 14,
+      "contradicted": 0,
+      "total": 95
+    },
+    "citation_validity": 1,
+    "citation_urls_found": 108,
+    "citation_urls_valid": 108
+  },
+  "results": [
+    {
+      "id": "ans-01-merge-modes",
+      "query": "What are the different modes of the Merge node and when should I use each?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 1,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__merge",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__merge",
+          "docs__code__builtin__n8n-metadata",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__switch",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__aggregate",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__if"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Append mode concatenates items from both inputs",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that Append 'Combines all items from all inputs, one after another' and describes it as stacking data, which accurately conveys concatenation behavior."
+          },
+          {
+            "fact": "Combine mode merges items by position, by key, or by all-with-all (multiplex)",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer accurately describes all three Combine sub-modes (Matching Fields/key, Position, and All Possible Combinations/multiplex) with correct explanations of when to use each."
+          },
+          {
+            "fact": "SQL Query mode runs an in-memory SQL join across inputs",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that SQL Query mode allows writing 'a raw SQL statement to merge inputs' with inputs available as variables, which accurately conveys that it performs in-memory SQL joins across inputs."
+          },
+          {
+            "fact": "Compare Datasets mode highlights differences between two inputs",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The candidate answer does not mention or describe a 'Compare Datasets' mode of the Merge node at all."
+          }
+        ],
+        "supported": 3,
+        "partial": 0,
+        "unsupported": 1,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.75
+      },
+      "citation": {
+        "urls_found": 5,
+        "urls_valid": 5,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Here's a breakdown of each Merge node mode and when to use it [Merge](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.merge/):\n\n---\n\n## Append\nCombines all items from all inputs, one after another (like a union). Use this when you simply want to **stack data from multiple sources** into one list without any joining logic.\n\n---\n\n## Combine\nJoins data from two inputs. Choose a **Combine By** sub-option:\n\n| Sub-mode | What it does | When to use it |\n|---|---|---|\n| **Matching Fields** | Merges items where a specified field value matches across both inputs | When you need to **join two datasets by a common key** (like a SQL join). Supports inner, outer, left, and right join styles via **Output Type**. |\n| **Position** | Merges item at index 0 with item at index 0, index 1 with index 1, etc. | When both inputs are **ordered lists that correspond to each other** positionally. |\n| **All Possible Combinations** | Outputs every possible pairing of items from both inputs | When you need a **cartesian product** of two datasets. |\n\n---\n\n## SQL Query\nWrite a raw SQL statement to merge inputs. Inputs are available as `input1`, `input2`, etc. Example:\n```sql\nSELECT * FROM input1 LEFT JOIN input2 ON input1.name = input2.id\n```\nUse this when you need **complex join logic** that the visual options can't express. Requires n8n v1.49.0 or later [Merge](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.merge/).\n\n---\n\n## Choose Branch\nWaits for both inputs but only **outputs data from one of them** (Input 1, Input 2, or a single empty item). Use this when you have **parallel branches** (e.g., after an IF node) and want to select which branch's data continues downstream.\n\n---\n\n### Key caveats\n- **Append** supports more than two inputs (n8n v1.49.0+); older versions are limited to two [Merge](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.merge/).\n- In **Combine by Position**, if Input 1 has fewer items than Input 2, the extra Input 2 items are dropped — Input 1 takes precedence [Merge](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.merge/).\n- Enable **Include Any Unpaired Items** under Options if you want to keep unmatched items when combining by position [Merge](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.merge/).",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 16257
+    },
+    {
+      "id": "ans-02-http-auth",
+      "query": "How do I add OAuth2 authentication to an HTTP Request node?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 1,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-langchain__mcpClient",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__toolmcp",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__toolhttprequest",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__common-issues"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Set Authentication to Predefined Credential Type or Generic Credential Type",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer accurately conveys that Authentication should be set to either Predefined Credential Type or Generic Credential Type, with clear explanations of when to use each option."
+          },
+          {
+            "fact": "For Generic, choose OAuth2 API and configure the OAuth2 credential",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer accurately conveys that for Generic OAuth2, users should choose 'OAuth2 API' from credential method options and configure the OAuth2 credential with required fields."
+          },
+          {
+            "fact": "Token URL, Auth URL, Client ID, Client Secret are required",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly lists 'client ID, client secret, authorization URL, token URL, scopes, etc.' as required fields when configuring Generic OAuth2, which accurately conveys all four required elements mentioned in the expected fact."
+          },
+          {
+            "fact": "Authorization header is added to the request automatically",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer does not mention that the authorization header is added automatically; it only describes the configuration steps without addressing what happens after OAuth2 is set up."
+          }
+        ],
+        "supported": 3,
+        "partial": 0,
+        "unsupported": 1,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.75
+      },
+      "citation": {
+        "urls_found": 4,
+        "urls_valid": 4,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "## Adding OAuth2 Authentication to the HTTP Request Node\n\nThere are two paths depending on whether n8n has built-in support for your service:\n\n---\n\n### Option 1: Predefined Credential Type (recommended)\n\nIf n8n supports your service natively:\n\n1. Open the **HTTP Request** node.\n2. In the **Authentication** field, select **Predefined Credential Type**.\n3. Choose your service from the list.\n4. Select or create a credential for that service — n8n handles the OAuth2 flow for you.\n\nn8n recommends this option when available, as it's easier to set up and manage [HTTP Request node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/).\n\n---\n\n### Option 2: Generic OAuth2 Credential\n\nIf your service isn't in the predefined list:\n\n1. Open the **HTTP Request** node.\n2. In the **Authentication** field, select **Generic Credential Type**.\n3. From the credential method options, choose **OAuth2 API** [HTTP Request node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/).\n4. Create a new credential and fill in the required fields (client ID, client secret, authorization URL, token URL, scopes, etc.) from your service's API documentation.\n\n---\n\n### For MCP Client nodes\n\nIf you're using the **MCP Client** or **MCP Client Tool** nodes, they also support OAuth2 — select **OAuth2** in the **Authentication** parameter of those nodes [MCP Client node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-langchain.mcpClient/)[MCP Client Tool node documentation](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.toolmcp/).\n\n---\n\n**Key tip:** Always refer to your service's API documentation to confirm the correct OAuth2 grant type, scopes, and endpoint URLs before configuring the credential.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 9389
+    },
+    {
+      "id": "ans-03-loop-batch",
+      "query": "How do I process items in batches of 50 with a Loop node?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 1,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__splitinbatches",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__splitinbatches",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__toolaiagent",
+          "docs__code__cookbook__http-node__pagination",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__common-issues",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__outputparseritemlist"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Use the Loop Over Items node (formerly Split In Batches)",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer correctly identifies and uses the Loop Over Items node (with a parenthetical reference acknowledging its former name 'Split in Batches') to process items in batches of 50."
+          },
+          {
+            "fact": "Set Batch Size to 50",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states to set Batch Size to 50 in step 2 and reinforces this in the opening sentence, directly conveying the expected fact."
+          },
+          {
+            "fact": "The done output runs after all batches complete",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that the 'done' output 'fires once when all items have been processed' and 'fires once all batches are processed,' directly conveying that it runs after all batches complete."
+          },
+          {
+            "fact": "The loop output runs once per batch",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'The loop output fires repeatedly, each time passing the next batch of up to 50 items downstream,' which directly conveys that the loop output runs once per batch."
+          }
+        ],
+        "supported": 4,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 6,
+        "urls_valid": 6,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Use the **Loop Over Items** node with its **Batch Size** parameter set to `50` [Loop Over Items (Split in Batches)](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitinbatches/).\n\n## Steps\n\n1. Add a **Loop Over Items** node to your workflow after the node that produces your items.\n2. Open the node and set **Batch Size** to `50`.\n3. Connect the **loop** output to whatever processing nodes you need (they will receive 50 items per iteration).\n4. Connect the **done** output to the next step in your workflow — this fires once all batches are processed, and the node combines all processed data at that point [Loop Over Items (Split in Batches)](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitinbatches/).\n\n## How it works\n\n- The **loop** output fires repeatedly, each time passing the next batch of up to 50 items downstream.\n- The **done** output fires once when all items have been processed [Loop Over Items (Split in Batches)](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitinbatches/).\n\n## Useful expressions\n\n- Check if there are items still to process:\n  ```\n  {{ $(\"Loop Over Items\").context[\"noItemsLeft\"] }}\n  ```\n  Returns `true` when finished, `false` when more batches remain [Loop Over Items (Split in Batches)](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitinbatches/).\n\n- Get the current iteration index:\n  ```\n  {{ $(\"Loop Over Items\").context[\"currentRunIndex\"] }}\n  ```\n  [Loop Over Items (Split in Batches)](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitinbatches/)\n\n> **Tip:** If you're batching to avoid API rate limits, you can also add a delay between requests using the HTTP Request node's built-in **Batching** option (Add Option → Batching → set **Batch Interval (ms)**) [HTTP Request node common issues](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/common-issues/) — this can complement the Loop Over Items approach.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 10135
+    },
+    {
+      "id": "ans-04-if-vs-switch",
+      "query": "When should I use an IF node versus a Switch node?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 0.75,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__if",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__if",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__switch",
+          "docs__code__index",
+          "docs__workflows__components__nodes",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__splitinbatches"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "IF has exactly two outputs (true / false)",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'Produces exactly two outputs: true and false' and reinforces this throughout, directly matching the expected fact."
+          },
+          {
+            "fact": "Switch supports multiple outputs based on rules or expression",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly describes Switch's two modes (Rules and Expression) and clearly states it supports multiple output routes based on comparison rules or JavaScript expressions."
+          },
+          {
+            "fact": "Use IF for binary branches",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer clearly states 'Use IF when you have a single condition with two possible outcomes (true/false)' and reinforces this with the IF node producing 'exactly two outputs: true and false,' directly supporting the fact that IF should be used for binary branches."
+          },
+          {
+            "fact": "Use Switch for three or more branches",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'Use Switch when you need more than two output routes' and includes a decision table row 'Use Switch' for '3+ distinct routes', directly supporting the fact."
+          }
+        ],
+        "supported": 4,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 7,
+        "urls_valid": 7,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Use **IF** when you have a single condition with two possible outcomes (true/false). Use **Switch** when you need more than two output routes.\n\n## IF node\n- Produces exactly **two outputs**: true and false [If](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.if/)\n- Best for simple binary decisions (e.g., \"is this value greater than 100?\")\n- Supports AND / OR logic across multiple conditions, but still funnels everything into just two branches [If](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.if/)\n\n## Switch node\n- Supports **multiple output routes** based on comparison rules [Switch](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.switch/)\n- Two modes:\n  - **Rules**: define a matching condition per output, with an optional **Fallback Output** for items that match nothing [Switch](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.switch/)\n  - **Expression**: write a JavaScript expression that returns an output index number [Switch](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.switch/)\n- Extra options like **Send data to all matching outputs** (fan-out to multiple branches at once) and **Ignore Case** [Switch](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.switch/)\n\n## Quick decision guide\n\n| Situation | Use |\n|---|---|\n| True / false split | IF |\n| 3+ distinct routes | Switch |\n| Route by category/status with many values | Switch (Rules mode) |\n| Programmatically compute which branch | Switch (Expression mode) |\n\nn8n's own docs confirm: *\"If you need more than two conditional outputs, use the Switch node.\"* [If](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.if/)",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 10396
+    },
+    {
+      "id": "ans-05-expression-now",
+      "query": "How do I get yesterday's date as a formatted string in an n8n expression?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": null,
+        "mrr_at_5": null,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__datetime",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__datetime",
+          "docs__integrations__builtin__trigger-nodes__n8n-nodes-base__googlesheetstrigger__common-issues",
+          "docs__code__cookbook__builtin__get-workflow-static-data",
+          "docs__code__builtin__overview",
+          "docs__code__cookbook__builtin__index"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Use $now (Luxon DateTime)",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that `$now` gives you the current date/time in the workflow's timezone and demonstrates its use with Luxon methods like `.minus()` and `.toFormat()`."
+          },
+          {
+            "fact": "Subtract one day with .minus({ days: 1 })",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly demonstrates and explains the .minus({ days: 1 }) method as the primary way to subtract one day from $now in an n8n expression."
+          },
+          {
+            "fact": "Format with .toFormat('yyyy-MM-dd') or .toISO()",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly demonstrates both .toFormat('yyyy-MM-dd') and .toISO() formatting methods with concrete examples in the table, directly matching the expected fact."
+          },
+          {
+            "fact": "Full expression: ={{ $now.minus({ days: 1 }).toFormat('yyyy-MM-dd') }}",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The candidate provides the exact full expression `={{ $now.minus({ days: 1 }).toFormat('yyyy-MM-dd') }}` as the primary solution in Option 1, with accurate explanation of each component."
+          }
+        ],
+        "supported": 4,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 2,
+        "urls_valid": 2,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "There are two ways to do this directly in an n8n expression, using Luxon (which n8n supports built-in):\n\n## Option 1: Subtract 1 day from `$now` and format it\n\n```\n={{ $now.minus({ days: 1 }).toFormat('yyyy-MM-dd') }}\n```\n\n- `$now` gives you the current date/time in the workflow's timezone.\n- `.minus({ days: 1 })` subtracts one day.\n- `.toFormat('yyyy-MM-dd')` formats it as e.g. `2025-01-14`. You can change the format string to whatever you need (tokens are case-sensitive) [Date & Time](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.datetime/).\n\n## Common format examples\n\n| Expression | Example output |\n|---|---|\n| `.toFormat('yyyy-MM-dd')` | `2025-01-14` |\n| `.toFormat('MM/dd/yyyy')` | `01/14/2025` |\n| `.toFormat('MMMM dd yyyy')` | `January 14 2025` |\n| `.toFormat('MM-dd-yyyy')` | `01-14-2025` |\n| `.toISO()` | `2025-01-14T00:00:00.000Z` |\n\n## Option 2: Use the Date & Time node\n\nIf you prefer a no-code approach, use the **Date & Time** node with the **Subtract From a Date** operation [Date & Time](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.datetime/):\n\n1. Set **Date to Subtract From** to `{{ $now }}`.\n2. Set **Time Unit to Subtract** to `Days`.\n3. Set **Duration** to `1`.\n4. Then pipe the output into another **Date & Time** node using **Format a Date** to get your desired string format.\n\nThe expression approach (Option 1) is simpler for this specific task.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 11447
+    },
+    {
+      "id": "ans-06-webhook-response",
+      "query": "My webhook returns 'Workflow was started' instead of my data. How do I send a custom response?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 0.75,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__respondtowebhook",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__respondtowebhook",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__webhook__index",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__webhook__common-issues",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__wait",
+          "docs__workflows__streaming"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Set the webhook Respond option to When Last Node Finishes or Using Respond to Webhook Node",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer directly and accurately conveys both methods for setting the webhook Respond option: 'When Last Node Finishes' and 'Using Respond to Webhook Node', with clear explanations of how each works."
+          },
+          {
+            "fact": "Add a Respond to Webhook node at the end",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly recommends adding a 'Respond to Webhook' node and describes it as being placed 'anywhere after the nodes that produce your data,' which substantively conveys the expected fact."
+          },
+          {
+            "fact": "Configure response Body, Headers, and Status Code on that node",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer mentions that the Respond to Webhook node allows setting 'Respond With' to different options and hints at custom responses, but does not explicitly state that Body, Headers, and Status Code can be individually configured on that node."
+          },
+          {
+            "fact": "Default Immediately mode is what returns the 'Workflow was started' message",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that the Webhook node's 'Respond' setting being set to 'Immediately' is why it returns the default 'Workflow was started' message, which directly matches the expected fact."
+          }
+        ],
+        "supported": 3,
+        "partial": 1,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.875
+      },
+      "citation": {
+        "urls_found": 6,
+        "urls_valid": 6,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Your Webhook node's **Respond** setting is currently set to **Immediately**, which is why it returns that default message right away. Here's how to fix it:\n\n## Option 1: Use the \"Respond to Webhook\" node (most flexible)\n\n1. In your **Webhook** node, set **Respond** to **Using 'Respond to Webhook' Node** [Webhook node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/).\n2. Add a **Respond to Webhook** node anywhere after the nodes that produce your data [Respond to Webhook](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.respondtowebhook/).\n3. In the Respond to Webhook node, set **Respond With** to whatever you need:\n   - **First Incoming Item** – returns the first item's JSON\n   - **All Incoming Items** – returns all items as JSON\n   - **JSON** – lets you define a custom JSON body\n   - **Text** – sends a plain text / HTML response [Respond to Webhook](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.respondtowebhook/)\n\n## Option 2: Use \"When Last Node Finishes\" (simpler, less control)\n\n1. In your **Webhook** node, set **Respond** to **When Last Node Finishes** [Webhook node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/).\n2. Set **Response Data** to one of:\n   - **All Entries** – returns all items from the last node as an array\n   - **First Entry JSON** – returns the first item as a JSON object\n   - **First Entry Binary** – returns binary data [Webhook node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/)\n\nThe webhook will then automatically return whatever the last node in your workflow outputs.\n\n## Which to choose?\n\n| Need | Option |\n|---|---|\n| Return data from a middle node, not the last | Option 1 (Respond to Webhook node) |\n| Custom JSON body or headers | Option 1 |\n| Simple pass-through of final output | Option 2 |\n\n> **Note:** If your workflow errors before the Respond to Webhook node runs, it will return a 500 status. If the workflow completes without hitting the node at all, it returns a standard 200 with no custom data [Respond to Webhook](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.respondtowebhook/).",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 12497
+    },
+    {
+      "id": "ans-07-schedule-cron",
+      "query": "How do I run a workflow every Monday at 9 AM?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 1,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__scheduletrigger__index",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__scheduletrigger__index",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__scheduletrigger__common-issues",
+          "docs__workflows__create",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__wait",
+          "docs__workflows__executions__manual-partial-and-production-executions"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Add a Schedule Trigger node",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly instructs to 'Add a Schedule Trigger node to your canvas' as the first step, directly conveying the expected fact."
+          },
+          {
+            "fact": "Use Mode: Custom (Cron) or Weeks",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly presents both methods—Weeks trigger interval and Custom (Cron) interval—as valid approaches for scheduling a workflow to run every Monday at 9 AM."
+          },
+          {
+            "fact": "Cron expression for Monday 9 AM: 0 9 * * 1",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states the cron expression '0 9 * * 1' and correctly explains it means 'at 9:00 AM every Monday', accurately conveying the expected fact."
+          },
+          {
+            "fact": "The timezone is the workflow's configured timezone",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that the Schedule Trigger uses the workflow's configured timezone and instructs users to check/adjust the Timezone field in workflow Settings if the trigger fires at the wrong time."
+          }
+        ],
+        "supported": 4,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 6,
+        "urls_valid": 6,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Use the **Schedule Trigger** node with a **Weeks** trigger interval [Schedule Trigger node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.scheduletrigger/):\n\n1. Add a **Schedule Trigger** node to your canvas.\n2. Under **Trigger Rules**, set **Trigger Interval** to **Weeks**.\n3. Set **Weeks Between Triggers** to `1`.\n4. Set **Trigger on Weekdays** to **Monday**.\n5. Set **Trigger at Hour** to **9am**.\n6. Set **Trigger at Minute** to `0`.\n\nAlternatively, use a **Custom (Cron)** interval with the expression `0 9 * * 1` — this means \"at 9:00 AM every Monday\" [Schedule Trigger node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.scheduletrigger/).\n\n**Important:** You must **publish** the workflow for the schedule to take effect. Unpublished workflows won't run automatically [Schedule Trigger node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.scheduletrigger/)[Create a workflow](https://docs.n8n.io/workflows/create/). If you change the schedule after publishing, you need to unpublish and republish for the new schedule to apply [Schedule Trigger node common issues](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.scheduletrigger/common-issues/).\n\nIf the trigger fires at the wrong time, check your workflow's timezone setting: open workflow **Settings** (three-dots menu → Settings) and adjust the **Timezone** field [Schedule Trigger node common issues](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.scheduletrigger/common-issues/).",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 8252
+    },
+    {
+      "id": "ans-08-aggregate-vs-items",
+      "query": "How do I combine all items into a single array field?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 1,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__aggregate",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__aggregate",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__merge",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__summarize",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__set",
+          "docs__code__cookbook__builtin__all"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Use the Aggregate node",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer accurately conveys that the Aggregate node should be used to combine items into a single array field, with correct configuration steps and example output."
+          },
+          {
+            "fact": "Set Aggregate to All Item Data or Individual Fields",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer accurately states to set Aggregate to 'All Item Data' mode, which directly matches the expected fact of setting it to 'All Item Data or Individual Fields' (the former option being correctly identified)."
+          },
+          {
+            "fact": "Output is a single item containing the aggregated array",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that the Aggregate node 'will collapse all incoming items into a single output item' and provides an example showing a single item with an array field, directly confirming the expected fact."
+          },
+          {
+            "fact": "Item Lists node can also concatenate but is older",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer does not mention the Item Lists node or acknowledge it as an alternative method for concatenating items."
+          }
+        ],
+        "supported": 3,
+        "partial": 0,
+        "unsupported": 1,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.75
+      },
+      "citation": {
+        "urls_found": 3,
+        "urls_valid": 3,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Use the **Aggregate** node set to **All Item Data** mode [Aggregate](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.aggregate/):\n\n1. Add an **Aggregate** node after your data source.\n2. Set **Aggregate** to **All Item Data**.\n3. In **Put Output in Field**, enter the name you want for the output field (e.g., `results`).\n4. Under **Include**, choose:\n   - **All fields** — includes everything from every item.\n   - **Specified Fields** — only include named fields.\n   - **All Fields Except** — exclude named fields.\n\nThe node will collapse all incoming items into a **single output item** where the chosen field contains an array of all the original items' data [Aggregate](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.aggregate/).\n\n**Example output shape:**\n```json\n{\n  \"results\": [\n    { \"name\": \"Alice\", \"age\": 30 },\n    { \"name\": \"Bob\", \"age\": 25 }\n  ]\n}\n```\n\n**Optional:** If you want to include binary data from the input items in the output, enable **Include Binaries** in the node options [Aggregate](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.aggregate/).",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 9431
+    },
+    {
+      "id": "ans-09-error-workflow",
+      "query": "How do I set up an error-handling workflow that notifies me when something fails?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 1,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__errortrigger",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__errortrigger",
+          "docs__workflows__settings",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__stopanderror",
+          "docs__workflows__components__nodes",
+          "docs__workflows__create"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Create a new workflow starting with an Error Trigger node",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states in Step 1 to 'Add an Error Trigger node as the starting node' and provides clear instructions on creating a new workflow with this node."
+          },
+          {
+            "fact": "In each main workflow's settings, assign this workflow as the Error Workflow",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly instructs users to open workflow settings and assign the error-handling workflow under 'Error Workflow', which directly conveys the expected fact."
+          },
+          {
+            "fact": "The Error Trigger receives execution metadata including the failed node",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer states the Error Trigger 'receives details about the failed workflow and the errors that occurred' but does not explicitly mention that it includes execution metadata or identifies the specific failed node."
+          },
+          {
+            "fact": "Add notification nodes (Email, Slack, Telegram) after the Error Trigger",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states to 'add whatever notification node you want (e.g., Slack, Gmail, Telegram) to alert you' after the Error Trigger node, directly conveying the expected fact."
+          }
+        ],
+        "supported": 3,
+        "partial": 1,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.875
+      },
+      "citation": {
+        "urls_found": 8,
+        "urls_valid": 8,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Here's how to set up error-handling in n8n:\n\n## Step 1: Create the Error Workflow\n\n1. Create a new workflow.\n2. Add an **Error Trigger** node as the starting node — this fires automatically when a linked workflow fails [Error Trigger node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.errortrigger/).\n3. After the Error Trigger, add whatever notification node you want (e.g., Slack, Gmail, Telegram) to alert you.\n4. **You don't need to publish this error workflow** for it to work [Error Trigger node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.errortrigger/).\n\nThe Error Trigger node receives details about the failed workflow and the errors that occurred, which you can pass into your notification message [Error Trigger node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.errortrigger/).\n\n## Step 2: Link the Error Workflow to Your Main Workflow\n\n1. Open the workflow you want to monitor.\n2. Select the **three dots icon** in the upper-right corner.\n3. Select **Settings**.\n4. Under **Error Workflow**, select the error-handling workflow you just created [Workflow settings](https://docs.n8n.io/workflows/settings/).\n\nNow, whenever that main workflow fails, the Error Trigger fires and your notification goes out.\n\n## Optional: Trigger Errors Intentionally\n\nIf you want to send **custom error messages** to your error workflow (e.g., to fail under a specific condition with a meaningful message), add a **Stop And Error** node in your main workflow [Stop And Error](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.stopanderror/).\n\n- Use **Error Message** mode to throw a plain text message.\n- Use **Error Object** mode to throw a JSON object with structured error details [Stop And Error](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.stopanderror/).\n\nThese custom messages will be picked up by the Error Trigger node in your error workflow.\n\n## Key Caveats\n\n- Error workflows **only trigger on automatic (production) executions** — they won't fire when you run a workflow manually in the editor [Error Trigger node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.errortrigger/).\n- If a workflow contains an Error Trigger node, **it uses itself as its own error workflow by default** [Error Trigger node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.errortrigger/).",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 12791
+    },
+    {
+      "id": "ans-10-code-run-once",
+      "query": "What's the difference between 'Run Once for All Items' and 'Run Once for Each Item' in the Code node",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 0,
+        "mrr_at_5": 0,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__executeworkflow",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__executeworkflow",
+          "docs__code__builtin__n8n-metadata",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__removeduplicates__templates-and-examples",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__executecommand__index",
+          "docs__workflows__components__nodes"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Run Once for All Items: code runs once, $input.all() returns all incoming items",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer clearly states that 'Run Once for All Items' executes a single time and uses `$input.all()` to access all incoming items, directly matching the expected fact."
+          },
+          {
+            "fact": "Run Once for Each Item: code runs per item, $input.item is the current item",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer clearly and accurately states that 'Run Once for Each Item' executes code per item and uses $input.item to access the current item, with multiple reinforcing examples and a reference table."
+          },
+          {
+            "fact": "All Items mode is faster for batch operations",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer identifies 'Run Once for All Items' as suitable for batch operations and implies efficiency through single execution, but does not explicitly state or substantiate that it is faster than the per-item alternative."
+          },
+          {
+            "fact": "Each Item mode is needed when you want to return a different number of items",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer does not mention that 'Run Once for Each Item' mode allows returning a different number of items than the input, which is a key distinguishing feature of this mode."
+          }
+        ],
+        "supported": 2,
+        "partial": 1,
+        "unsupported": 1,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.625
+      },
+      "citation": {
+        "urls_found": 3,
+        "urls_valid": 3,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "## Code Node: Run Once for All Items vs. Run Once for Each Item\n\nThese two modes control how the Code node processes incoming data [Remove Duplicates node templates and Examples](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.removeduplicates/templates-and-examples/):\n\n### Run Once for All Items (default)\n- The code executes **a single time**, receiving all incoming items together.\n- Access all items via `$input.all()` — you get the full array at once.\n- Best for operations that need to look across multiple items (aggregations, comparisons, sorting, etc.).\n\n### Run Once for Each Item\n- The code executes **once per item** — if 10 items come in, your code runs 10 times.\n- Access the current item via `$input.item`.\n- Best for per-record transformations where each item is independent.\n\n---\n\n## Quick reference\n\n| | Run Once for All Items | Run Once for Each Item |\n|---|---|---|\n| Executions | 1 | N (one per item) |\n| Access items | `$input.all()` | `$input.item` |\n| Use when | Batch logic, aggregations | Per-record transforms |\n\n---\n\n## Example\n\nIn the Remove Duplicates example [Remove Duplicates node templates and Examples](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.removeduplicates/templates-and-examples/), the Code node is set to **Run Once for Each Item** with this pattern:\n\n```js\n// Run Once for Each Item — $input.item is the current record\nreturn { data: [...] }\n```\n\nIf you needed to process all records together (e.g., find the max ID across all items), you'd use **Run Once for All Items** and iterate over `$input.all()` yourself.\n\n---\n\n**Tip:** `$itemIndex` (the index of the current item) is only available in expressions, **not** inside the Code node [n8n metadata](https://docs.n8n.io/code/builtin/n8n-metadata/).",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 11243
+    },
+    {
+      "id": "ans-11-pipedrive-paginate",
+      "query": "How do I paginate through more than 100 results from the Pipedrive API in a workflow?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 0.3333333333333333,
+        "top_doc_id": "docs__code__cookbook__http-node__pagination",
+        "retrieved_doc_ids": [
+          "docs__code__cookbook__http-node__pagination",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__splitinbatches",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__httprequest__index",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__limit",
+          "docs__code__builtin__http-node-variables"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Use HTTP Request node with Pagination enabled",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly and accurately explains how to use the HTTP Request node's Pagination feature to handle Pipedrive API pagination, covering both cursor-based and offset-based approaches with clear configuration steps."
+          },
+          {
+            "fact": "Set Pagination Mode to Response Contains Next URL or Update a Parameter in Each Request",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly describes both pagination modes ('Response Contains Next URL' and 'Update a Parameter in Each Request') with clear setup instructions for each, directly matching the expected fact."
+          },
+          {
+            "fact": "Pipedrive uses cursor-based pagination via start parameter",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer mentions offset-based pagination with a 'start' parameter as Option B, which aligns with the fact, but also presents cursor-based pagination as Option A without clearly establishing that Pipedrive's primary pagination method is cursor-based via the start parameter."
+          },
+          {
+            "fact": "Set Pagination Complete When to Empty Response or Other (response.data is empty)",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer does not mention or address the 'Pagination Complete When' setting or how to configure when pagination should stop based on empty responses."
+          }
+        ],
+        "supported": 2,
+        "partial": 1,
+        "unsupported": 1,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.625
+      },
+      "citation": {
+        "urls_found": 8,
+        "urls_valid": 8,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Here's how to paginate through Pipedrive API results using the HTTP Request node.\n\n## Setup\n\nPipedrive's API uses cursor- or offset-based pagination. Most endpoints return a `next_cursor` or a `more_items_in_collection` flag in the response. The exact field depends on the endpoint — check Pipedrive's API docs for the specific one you're calling.\n\n---\n\n## Option A: Response contains a next-page URL or cursor\n\nIf Pipedrive returns a `next_cursor` or `next_url` in the response body:\n\n1. In the HTTP Request node, select **Add Option** > **Pagination** [HTTP Request node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/).\n2. Set **Pagination Mode** to **Response Contains Next URL** [HTTP Request node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/).\n3. In **Next URL**, use an expression pointing to the field in the response, for example:\n   ```\n   {{ $response.body[\"additional_data\"][\"next_cursor\"] }}\n   ```\n   The exact path depends on what Pipedrive returns — do a test call first to inspect the response structure [HTTP Request node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/).\n\n---\n\n## Option B: Offset/page-number based pagination\n\nIf the endpoint uses a `start` or `page` offset parameter:\n\n1. In the HTTP Request node, select **Add Option** > **Pagination** [HTTP Request node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/).\n2. Set **Pagination Mode** to **Update a Parameter in Each Request** [HTTP Request node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/).\n3. Set **Type** to **Query**.\n4. Set **Name** to the parameter your endpoint uses (e.g., `start` or `page`).\n5. Toggle **Expression** on for **Value** and enter:\n   ```\n   {{ $pageCount * 100 }}\n   ```\n   This increments the offset by 100 on each request (assuming a `limit=100` query parameter you've already set) [Pagination in the HTTP Request node](https://docs.n8n.io/code/cookbook/http-node/pagination/).\n\n---\n\n## Setting the page size\n\nTo request 100 results per page:\n\n1. Turn on **Send Query Parameters** in the node.\n2. Add a parameter with **Name** = `limit` and **Value** = `100` [Pagination in the HTTP Request node](https://docs.n8n.io/code/cookbook/http-node/pagination/).\n\n---\n\n## Tip: Inspect the response first\n\nBefore configuring pagination, run the HTTP Request node once **without** pagination to see exactly what fields Pipedrive returns in the response body. This tells you which expression to use in the pagination config [HTTP Request node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/).",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 15551
+    },
+    {
+      "id": "ans-12-subworkflow-data",
+      "query": "How do I pass data into a subworkflow and get results back?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": null,
+        "mrr_at_5": null,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__executeworkflow",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__executeworkflow",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__toolworkflow",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__executeworkflowtrigger",
+          "docs__workflows__subworkflow-conversion",
+          "docs__workflows__executions__custom-executions-data"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Use the Execute Sub-workflow node (formerly named Execute Workflow) to call the subworkflow",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer clearly states 'Use the Execute Sub-workflow node to call it' and references it throughout as the correct node for calling subworkflows from a parent workflow."
+          },
+          {
+            "fact": "Items passed to Execute Workflow become the subworkflow's input",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer clearly explains that data passed to the Execute Sub-workflow node becomes input to the subworkflow through the 'Workflow Inputs' section, and that the subworkflow's trigger receives this incoming data."
+          },
+          {
+            "fact": "The subworkflow must start with an Execute Workflow Trigger node",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'Start with an Execute Sub-workflow Trigger node' and 'This is what receives incoming data and must be the first node,' directly conveying the required fact."
+          },
+          {
+            "fact": "The subworkflow's last node output is returned to the calling workflow",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'The Execute Sub-workflow node waits for the subworkflow to finish and returns its output items to the parent workflow by default' and 'Items flow out of Execute Sub-workflow node,' directly conveying that the subworkflow's last node output is returned to the calling workflow."
+          }
+        ],
+        "supported": 4,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 8,
+        "urls_valid": 8,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Here's how data flows between a parent workflow and a subworkflow:\n\n## Setup: Two workflows needed\n\n**In the subworkflow:** Start with an **Execute Sub-workflow Trigger** node. This is what receives incoming data and must be the first node [Execute Sub-workflow Trigger node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executeworkflowtrigger/).\n\n**In the parent workflow:** Use the **Execute Sub-workflow** node to call it [Execute Sub-workflow](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executeworkflow/).\n\n---\n\n## Passing data IN\n\n1. In the **Execute Sub-workflow** node, set **Source** to **Database** and pick your subworkflow from the list (or enter its Workflow ID) [Execute Sub-workflow](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executeworkflow/).\n2. The subworkflow's expected input fields will automatically appear under **Workflow Inputs** — fill them in or map values from upstream nodes [Execute Sub-workflow](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executeworkflow/).\n3. Choose a **Mode**:\n   - **Run once with all items** — sends all items in a single call.\n   - **Run once for each item** — calls the subworkflow once per item [Execute Sub-workflow](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executeworkflow/).\n\n> If the subworkflow's trigger is set to \"Accept all data\" mode, the input fields won't appear — it will accept whatever you send [Execute Sub-workflow](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executeworkflow/).\n\n---\n\n## Getting results BACK\n\nThe **Execute Sub-workflow** node waits for the subworkflow to finish and returns its output items to the parent workflow by default.\n\nYou can control this with the **Wait for Sub-Workflow Completion** option:\n- **On (default):** Parent workflow pauses until the subworkflow finishes, then receives its output.\n- **Off:** Parent workflow continues immediately without waiting (and won't receive output) [Execute Sub-workflow](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executeworkflow/).\n\n---\n\n## Type constraints\n\nBy default, inputs and outputs allow all data types. If you want strict typing, set expected types manually in the **Execute Sub-workflow Trigger** node (for inputs) and the **Edit Fields (Set)** node labeled **Return** at the end of the subworkflow (for outputs) [Sub-workflow conversion](https://docs.n8n.io/workflows/subworkflow-conversion/).\n\n---\n\n## Quick summary\n\n| Step | Where | What to do |\n|---|---|---|\n| Receive input | Subworkflow | Execute Sub-workflow Trigger node |\n| Send data | Parent | Execute Sub-workflow node → Workflow Inputs |\n| Return results | Subworkflow | Last node's output items |\n| Receive results | Parent | Items flow out of Execute Sub-workflow node |",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 15095
+    },
+    {
+      "id": "ans-13-credentials-encryption",
+      "query": "Where are n8n credentials stored and how are they encrypted?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": null,
+        "mrr_at_5": null,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__n8n",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__n8n",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__crypto",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__jwt",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__common-issues",
+          "docs__workflows__sharing"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Credentials are stored in the database (SQLite or Postgres)",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer explains where credentials are managed in the UI and how they are encrypted, but does not mention that they are stored in a database (SQLite or Postgres)."
+          },
+          {
+            "fact": "Encrypted at rest using the N8N_ENCRYPTION_KEY environment variable",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer directly and accurately states that credentials are encrypted at rest using the N8N_ENCRYPTION_KEY environment variable, with substantive supporting details about storage, encryption mechanism, and security implications."
+          },
+          {
+            "fact": "If N8N_ENCRYPTION_KEY changes you cannot decrypt existing credentials",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that if N8N_ENCRYPTION_KEY changes or is lost, existing encrypted credentials cannot be decrypted, which directly and accurately conveys the expected fact."
+          },
+          {
+            "fact": "Backup the key separately from the database",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer emphasizes that N8N_ENCRYPTION_KEY must be 'kept consistent' and 'backed up securely' but does not explicitly state that the key should be backed up separately from the database itself."
+          }
+        ],
+        "supported": 2,
+        "partial": 1,
+        "unsupported": 1,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.625
+      },
+      "citation": {
+        "urls_found": 4,
+        "urls_valid": 4,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Credentials in n8n are **encrypted at rest using the `N8N_ENCRYPTION_KEY` environment variable**.\n\nHere are the key details:\n\n- **Storage**: Credentials are created and managed under **Credentials > New** in the n8n UI. Each integration node references a credential by its ID.\n- **Encryption**: All credential data is encrypted at rest with the value set in the `N8N_ENCRYPTION_KEY` environment variable on your n8n instance.\n- **Credential types**: Supported types include API Key, OAuth1, OAuth2, Basic Auth, Header Auth, Generic, and per-integration types (e.g., `googleSheetsOAuth2`, `notionApi`, `slackApi`) [n8n](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.n8n/).\n\n## Important security notes\n\n- **Code nodes cannot access credentials** by design. Attempting to use `this.getCredentials()` or `$getCredentials()` inside a Code node will throw an error. This is intentional to prevent exposure of sensitive authentication data [Code node common issues](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.code/common-issues/).\n- If you need to make authenticated API calls from logic-heavy workflows, use the **HTTP Request node** instead, which has full credential support [Code node common issues](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.code/common-issues/).\n- When a workflow is shared with another user, that editor can *use* the credentials attached to the workflow's nodes, even if those credentials aren't explicitly shared with them separately [Workflow sharing](https://docs.n8n.io/workflows/sharing/).\n\n## For self-hosted instances\n\nThe `N8N_ENCRYPTION_KEY` must be set and kept consistent — if it changes or is lost, existing encrypted credentials cannot be decrypted. This is a critical configuration value to back up securely.\n\nThe retrieved docs don't cover the full technical details of the encryption algorithm used internally, so for deeper specifics on the cryptographic implementation, you'd need to consult the n8n source code directly.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 14356
+    },
+    {
+      "id": "ans-14-set-vs-edit-fields",
+      "query": "I see both Set and Edit Fields in my n8n. Are they the same node?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 1,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__set",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__set",
+          "docs__workflows__components__nodes",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__form",
+          "docs__integrations__builtin__core-nodes__index",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__n8n"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Edit Fields is the newer name for the Set node",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer clearly states that 'Edit Fields' is the current/newer name for what was previously called 'Set', directly conveying the expected fact."
+          },
+          {
+            "fact": "Functionally identical in current versions",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'they are functionally identical' and 'The rename was a UI/branding update, not a functional change,' directly conveying that Set and Edit Fields are functionally identical in current versions."
+          },
+          {
+            "fact": "Older workflows may show Set, newer ones show Edit Fields",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'If you see **Set** in an older workflow and **Edit Fields** in the node panel, they are functionally identical,' which directly conveys that older workflows show Set while newer ones show Edit Fields."
+          },
+          {
+            "fact": "Both have Manual Mapping and JSON modes",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer does not mention or address the Manual Mapping and JSON modes that are available in the Edit Fields (Set) node."
+          }
+        ],
+        "supported": 3,
+        "partial": 0,
+        "unsupported": 1,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.75
+      },
+      "citation": {
+        "urls_found": 2,
+        "urls_valid": 2,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Yes, they are the same node. **Edit Fields** is the current name for what was previously called **Set** [Edit Fields (Set)](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.set/). The documentation refers to it as \"Edit Fields (Set)\" — the \"(Set)\" part acknowledges the older name.\n\nThe node does the same thing regardless of which name you see in your instance: it sets new fields or overwrites existing ones on items passing through it [Edit Fields (Set)](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.set/).\n\nIf you see **Set** in an older workflow and **Edit Fields** in the node panel, they are functionally identical. The rename was a UI/branding update, not a functional change.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 6135
+    },
+    {
+      "id": "ans-15-continue-on-fail",
+      "query": "How do I make a node not stop the workflow when it errors?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": null,
+        "mrr_at_5": null,
+        "top_doc_id": "docs__workflows__components__nodes",
+        "retrieved_doc_ids": [
+          "docs__workflows__components__nodes",
+          "docs__workflows__settings",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__errortrigger",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__stopanderror",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__noop"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Open the node settings (gear icon)",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer mentions opening the node and accessing Settings, but specifies 'double-clicking' rather than the gear icon as the expected method."
+          },
+          {
+            "fact": "Enable Continue On Fail or set On Error to Continue",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer accurately conveys that enabling 'Continue on Fail' (via the 'On Error' setting) prevents workflow stoppage, with clear explanation of the Continue options available."
+          },
+          {
+            "fact": "The node will output an empty item instead of stopping the workflow",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer correctly explains how to prevent workflow stoppage but does not specifically mention that the node outputs an empty item, only referencing 'last valid data' and 'error information' without clarifying the empty item behavior."
+          },
+          {
+            "fact": "Use Always Output Data alongside to guarantee at least one item flows downstream",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer does not mention 'Always Output Data' or explain how to guarantee at least one item flows downstream when using error handling options."
+          }
+        ],
+        "supported": 1,
+        "partial": 2,
+        "unsupported": 1,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.5
+      },
+      "citation": {
+        "urls_found": 3,
+        "urls_valid": 3,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "In the node's **Settings** tab, find the **On Error** option and set it to either:\n\n- **Continue**: Proceeds to the next node despite the error, using the last valid data. [Nodes](https://docs.n8n.io/workflows/components/nodes/)\n- **Continue (using error output)**: Continues workflow execution, passing error information to the next node for potential handling. [Nodes](https://docs.n8n.io/workflows/components/nodes/)\n\nBoth options prevent the workflow from halting on that node's failure. The default behavior (**Stop Workflow**) halts the entire workflow when an error occurs. [Nodes](https://docs.n8n.io/workflows/components/nodes/)\n\n**Steps to configure:**\n1. Open the node by double-clicking it.\n2. Go to the **Settings** tab.\n3. Change the **On Error** dropdown from **Stop Workflow** to your preferred continue option.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 6235
+    },
+    {
+      "id": "ans-16-langchain-agent-memory",
+      "query": "How do I give an AI Agent node conversation memory across requests?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 0,
+        "mrr_at_5": 0,
+        "top_doc_id": "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__memorybufferwindow__index",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__memorybufferwindow__index",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__memoryredischat",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__memorymongochat",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__memorymanager",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__memorypostgreschat"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Attach a Memory sub-node to the AI Agent node",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer clearly and accurately conveys that memory sub-nodes attach to the AI Agent node's Memory input, with explicit step-by-step connection instructions and multiple memory node options."
+          },
+          {
+            "fact": "Options include Buffer Window, Postgres Chat Memory, Redis Chat Memory, Zep, Motorhead, Xata",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer covers Buffer Window (as 'Simple Memory'), Postgres Chat Memory, and Redis Chat Memory accurately, but omits Zep, Motorhead, and Xata entirely, which are listed as supported options in the expected fact."
+          },
+          {
+            "fact": "Set a session key (often $json.sessionId or chat-trigger session) to identify the conversation",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly and repeatedly emphasizes setting a Session Key with dynamic values like `{{ $json.sessionId }}` to identify conversations, which directly matches the expected fact."
+          },
+          {
+            "fact": "Buffer Window keeps only the last N messages",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'Context Window Length: how many previous interactions to retain' and 'Context Window Length: number of past interactions to include' across multiple memory node options, accurately conveying that the buffer window keeps only the last N messages."
+          }
+        ],
+        "supported": 3,
+        "partial": 1,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.875
+      },
+      "citation": {
+        "urls_found": 5,
+        "urls_valid": 5,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "To give an AI Agent node conversation memory, you connect a **memory sub-node** to the Agent's **Memory** input. Several options are available depending on your infrastructure:\n\n---\n\n## Memory node options\n\n### 1. Simple Memory (in-workflow, no external service)\n- Node: **Simple Memory**\n- Stores chat history directly in workflow data.\n- Configure:\n  - **Session Key**: a key to identify the conversation (e.g. a user ID from `{{ $json.sessionId }}`)\n  - **Context Window Length**: how many previous interactions to retain\n\n> ⚠️ **Do not use this in queue mode.** n8n can't guarantee calls go to the same worker, so memory will be inconsistent. [Simple Memory node documentation](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.memorybufferwindow/)\n\n---\n\n### 2. Redis Chat Memory (external Redis server)\n- Node: **Redis Chat Memory**\n- Requires Redis credentials.\n- Configure:\n  - **Session Key**: identifies the conversation\n  - **Session Time To Live**: auto-expire sessions after N seconds\n  - **Context Window Length**: number of past interactions to include [Redis Chat Memory node documentation](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.memoryredischat/)\n\n---\n\n### 3. Postgres Chat Memory (external Postgres DB)\n- Node: **Postgres Chat Memory**\n- Requires Postgres credentials.\n- Configure:\n  - **Session Key**: identifies the conversation\n  - **Table Name**: where history is stored (auto-created if missing)\n  - **Context Window Length** [Postgres Chat Memory node documentation](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.memorypostgreschat/)\n\n---\n\n### 4. MongoDB Chat Memory (external MongoDB)\n- Node: **MongoDB Chat Memory**\n- Requires MongoDB credentials.\n- Configure:\n  - **Session Key**, **Collection Name**, **Database Name**, **Context Window Length** [MongoDB Chat Memory node documentation](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.memorymongochat/)\n\n---\n\n## How to connect\n\n1. Open your **AI Agent** node.\n2. Click the **+** on the **Memory** input (sub-node slot).\n3. Select your chosen memory node.\n4. Configure the **Session Key** — this is critical. Use a dynamic value like `{{ $json.sessionId }}` or `{{ $json.chatId }}` so each user/conversation gets its own memory.\n\n---\n\n## Advanced: Chat Memory Manager\n\nIf you need to **manually read, insert, or delete** messages in memory (e.g. inject a system prompt, pre-load context, or clear history), use the **Chat Memory Manager** node. It supports:\n- **Get Many Messages**\n- **Insert Messages** (alongside existing or overriding all)\n- **Delete Messages** (last N or all) [Chat Memory Manager node documentation](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.memorymanager/)\n\n---\n\n**Key takeaway**: For production multi-user deployments, use Redis, Postgres, or MongoDB memory — not Simple Memory — so each conversation is isolated by Session Key and persists reliably across requests.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 15085
+    },
+    {
+      "id": "ans-17-google-sheets-update",
+      "query": "How do I update an existing Google Sheets row instead of appending a new one?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": null,
+        "mrr_at_5": null,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__set",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__set",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__datatable__rows",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__datatable__index",
+          "docs__integrations__builtin__trigger-nodes__n8n-nodes-base__googlesheetstrigger__index",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__readwritefile"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Use Google Sheets node, Operation: Update or Update Row",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer accurately conveys that users should use the Google Sheets node with the Update (or Update Row) operation to update existing rows, and provides correct configuration details including the matching column concept."
+          },
+          {
+            "fact": "Set Matching Columns to the column n8n uses to find the row",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states to 'Specify which column n8n uses to find the existing row' under the Matching Column parameter, directly conveying the expected fact."
+          },
+          {
+            "fact": "Provide the matching value in your input data",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'Provide the matching value in your input data' by instructing users to specify a Matching Column and noting that 'n8n will look for a row where that column's value matches the incoming data.'"
+          },
+          {
+            "fact": "The row is updated in place; no duplicate is created",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that 'Update Row' finds an existing row and 'overwrites its fields' (updating in place), and contrasts this with 'Append Row' which 'always adds a new row,' directly conveying that update operations do not create duplicates."
+          }
+        ],
+        "supported": 4,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 0,
+        "urls_valid": 0,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "To update an existing row in Google Sheets (rather than appending), use the **Google Sheets** node with the **Update Row** operation. Here's how to configure it:\n\n## Steps\n\n1. **Add a Google Sheets node** to your workflow.\n2. Set the **Operation** to **Update Row** (not \"Append or Update\" or \"Append\").\n3. Configure these parameters:\n   - **Credential**: Select your Google Sheets OAuth2 credential.\n   - **Document**: Choose your spreadsheet.\n   - **Sheet**: Choose the specific sheet tab.\n   - **Mapping Column Mode**: Choose how to match the row to update:\n     - **Map Each Column Manually**: Explicitly map incoming fields to sheet columns. Use this when field names don't match column headers.\n     - **Map Automatically**: n8n matches fields to columns by name automatically (field names must exactly match column headers).\n   - **Matching Column**: Specify which column n8n uses to find the existing row (e.g., `id` or `email`). n8n will look for a row where that column's value matches the incoming data, then update it.\n\n## Key distinction\n\n- **Append Row** always adds a new row at the bottom.\n- **Update Row** finds an existing row by a matching column value and overwrites its fields.\n\n## Tip: Use \"Upsert\" if unsure whether the row exists\n\nIf the row might or might not exist, use the **Upsert** operation instead — it updates the row if found, or appends a new one if not.\n\n---\n\nNote: The retrieved documentation doesn't include the full Google Sheets node action reference, so the exact UI label names above are based on the primer's description of the Google Sheets node. If you don't see \"Update Row\" in your version, look for **\"Update\"** under the Operation dropdown — the underlying behavior is the same.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 13548
+    },
+    {
+      "id": "ans-18-binary-data",
+      "query": "How do I attach a file from one node as an email attachment in the next node?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": null,
+        "mrr_at_5": null,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__sendemail",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__sendemail",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__readwritefile",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__emailimap",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__ssh",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__ftp"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Binary data flows on the item itself under the binary key",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer mentions that binary data is stored in a field (e.g., 'data') and references it by name, but does not explicitly state that binary data flows on the item itself under the 'binary' key as the structural fact requires."
+          },
+          {
+            "fact": "In the Email/Gmail node, enable Attachments and reference the binary field name",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer accurately explains how to enable attachments in the Send Email node and reference the binary field name, matching the expected fact."
+          },
+          {
+            "fact": "Default binary field name is data",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'By default, binary data is stored in a field called `data`' which directly conveys the expected fact."
+          },
+          {
+            "fact": "No need to re-encode; n8n handles base64 conversion",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer does not mention or address whether base64 conversion is needed or handled automatically by n8n."
+          }
+        ],
+        "supported": 2,
+        "partial": 1,
+        "unsupported": 1,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.625
+      },
+      "citation": {
+        "urls_found": 7,
+        "urls_valid": 7,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Here's how to attach a file as an email attachment using the **Send Email** node:\n\n## Step-by-step\n\n**1. Get the file into your workflow as binary data**\n\nUse one of these nodes before the Send Email node:\n- **Read/Write Files from Disk** node (self-hosted only) — reads a file from disk and outputs it as binary data [Read/Write Files from Disk](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.readwritefile/)\n- **HTTP Request** node — downloads a file from a URL as binary data [Send Email](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.sendemail/)\n\n**2. Configure the Send Email node**\n\nIn the Send Email node's **Options**, find the **Attachments** field and enter the name of the binary property that holds the file data [Send Email](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.sendemail/).\n\n- By default, binary data is stored in a field called `data`, so you'd enter `data` there.\n- If you have multiple attachments, enter a comma-separated list of binary property names, e.g. `data, file2` [Send Email](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.sendemail/).\n\n## Example flow\n\n```\nRead/Write Files from Disk  →  Send Email\n(outputs binary field \"data\")   (Attachments option: \"data\")\n```\n\n## Key notes\n\n- The **Attachments** field is found under **Options** in the Send Email node, not in the main parameters [Send Email](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.sendemail/).\n- You can also reference embedded images in the email body using the `cid:` prefix, e.g. `<img src=\"cid:image_1\">` [Send Email](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.sendemail/).\n- The Read/Write Files from Disk node is **not available on n8n Cloud** — use the HTTP Request node to fetch files there [Read/Write Files from Disk](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.readwritefile/).",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 11567
+    },
+    {
+      "id": "ans-19-self-host-queue-mode",
+      "query": "Should I run n8n in queue mode and what does that require?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": null,
+        "mrr_at_5": null,
+        "top_doc_id": "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__memorybufferwindow__index",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__memorybufferwindow__index",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-langchain__mcptrigger",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__executecommand__index",
+          "docs__workflows__executions__manual-partial-and-production-executions",
+          "docs__workflows__executions__index"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Queue mode separates main process from worker processes",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer does not mention or convey that queue mode separates the main process from worker processes; it only discusses specific node behaviors in queue mode without explaining the architectural separation."
+          },
+          {
+            "fact": "Requires Redis as the message broker",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The candidate answer does not mention Redis or any message broker requirement for queue mode, despite acknowledging that the retrieved docs lack complete information about queue mode requirements."
+          },
+          {
+            "fact": "Set EXECUTIONS_MODE=queue and configure QUEUE_BULL_REDIS_HOST",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The candidate answer does not mention setting EXECUTIONS_MODE=queue or configuring QUEUE_BULL_REDIS_HOST, instead explicitly stating they cannot provide complete details about queue mode requirements from available sources."
+          },
+          {
+            "fact": "Enables horizontal scaling of workers for high-volume workflows",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer does not mention or address that queue mode enables horizontal scaling of workers, instead focusing only on specific node constraints and limitations in queue mode."
+          }
+        ],
+        "supported": 0,
+        "partial": 0,
+        "unsupported": 4,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0
+      },
+      "citation": {
+        "urls_found": 3,
+        "urls_valid": 3,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "The retrieved docs mention queue mode in passing but don't contain a full explanation of what it is, what it requires, or when to use it. I can't give you a complete, accurate answer from the available sources alone.\n\nWhat the retrieved docs **do** say about queue mode:\n\n- The **Simple Memory node** doesn't work reliably in queue mode, because n8n can't guarantee every call goes to the same worker [Simple Memory node documentation](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.memorybufferwindow/).\n- The **Execute Command node** runs commands on whichever worker is executing the task in queue mode [Execute Command](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executecommand/).\n- The **MCP Server Trigger node** has specific constraints in queue mode — if you run multiple webhook replicas, you must route all `/mcp*` traffic to a single dedicated replica, otherwise SSE connections will break [MCP Server Trigger node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-langchain.mcptrigger/).\n\nFor a full answer on queue mode architecture, Redis requirements, worker setup, and when to use it, I'd recommend checking the n8n hosting/scaling documentation directly (search for \"queue mode\" in the n8n docs). I won't invent details that aren't in the retrieved sources.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 10195
+    },
+    {
+      "id": "ans-20-filter-empty",
+      "query": "My Filter node passes everything through even when the condition should drop items. What's wrong?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "answer",
+        "observed": "answer",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 1,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__filter",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__filter",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__datatable__rows",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__if",
+          "docs__integrations__builtin__cluster-nodes__root-nodes__n8n-nodes-langchain__text-classifier",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__switch"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Filter conditions on string values may be type-mismatched with number expectations",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "Section 2 directly addresses type mismatch between string values and number data types, explaining that selecting the wrong data type dropdown causes unexpected comparison behavior."
+          },
+          {
+            "fact": "Use the Type option to enforce string / number / boolean comparison",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "Point 2 explicitly states that the data type dropdown controls comparison evaluation and must match the actual field type, which directly conveys the fact that the Type option enforces string/number/boolean comparison."
+          },
+          {
+            "fact": "Empty values may evaluate as truthy in some operators",
+            "verdict": "unsupported",
+            "passes": [
+              "unsupported",
+              "unsupported",
+              "unsupported"
+            ],
+            "rationale": "The answer does not address how empty values may evaluate as truthy in certain operators, which is the specific fact being evaluated."
+          },
+          {
+            "fact": "Use the Looser strict option if needed, or pre-normalize with Set",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer mentions 'Less Strict Type Validation' as an option to handle type mismatches, but does not mention pre-normalizing data with a Set node as an alternative approach, only partially addressing the expected fact."
+          }
+        ],
+        "supported": 2,
+        "partial": 1,
+        "unsupported": 1,
+        "contradicted": 0,
+        "total": 4,
+        "rate": 0.625
+      },
+      "citation": {
+        "urls_found": 4,
+        "urls_valid": 4,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "Here are the most common reasons a Filter node passes everything through when it shouldn't:\n\n---\n\n## 1. Case sensitivity mismatch\nBy default the Filter node is case-sensitive. If you're comparing strings and the casing doesn't match exactly (e.g., `\"Active\"` vs `\"active\"`), the condition may evaluate unexpectedly. Enable the **Ignore Case** option in the node's **Options** section to remove case as a variable. [Filter](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filter/)\n\n---\n\n## 2. Wrong data type selected\nThe data type dropdown controls how the comparison is evaluated. If the field contains a number but you selected **String**, the comparison logic is different and may not behave as expected. Make sure the data type in the dropdown matches the actual type of the field you're comparing. [Filter](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filter/)\n\n---\n\n## 3. Type mismatch causing a \"wrong type\" error (silently passing)\nIf n8n can't compare the values due to a type mismatch, it may skip the filter logic. Enable **Less Strict Type Validation** in the node options — this tells n8n to attempt type conversion before comparing. [Filter](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filter/)\n\n---\n\n## 4. AND vs OR logic is wrong\nIf you have multiple conditions and selected **OR**, an item only needs to match *one* condition to pass through. If you intended all conditions to be required, switch the combinator to **AND**. [Filter](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filter/)\n\n---\n\n## 5. The expression referencing the field is wrong\nIf the field path in your condition is incorrect (e.g., `$json.status` but the actual field is `$json.data.status`), the value being compared is `undefined`, which may not match — but double-check by inspecting the node's input data to confirm the exact field path.\n\n---\n\n**Debugging tip:** Click the Filter node, go to the **Input** tab, and inspect the actual values flowing in. Then check that your condition field path and data type exactly match what you see there.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 13595
+    },
+    {
+      "id": "dbg-01-merge-no-output",
+      "query": "Why doesn't this workflow output anything? Here's the JSON: {\"nodes\":[{\"name\":\"Manual Trigger\",\"type",
+      "http_mode": "debug",
+      "mode": {
+        "expected": "debug",
+        "observed": "debug",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 0,
+        "mrr_at_5": 0,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__common-issues",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__common-issues",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__noop",
+          "docs__workflows__executions__execution-data-redaction",
+          "docs__code__cookbook__code-node__console-log",
+          "docs__integrations__builtin__cluster-nodes__sub-nodes__n8n-nodes-langchain__outputparserstructured__common-issues"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Merge in mergeByKey mode requires both inputs to have items with the matching key field",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that mergeByKey mode requires the specified key field to exist on items from both inputs, and identifies the absence of the 'id' field as a breaking problem that causes the merge to output nothing."
+          },
+          {
+            "fact": "Set A and Set B output items with src field, not id",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states in Issue #2 that 'Neither Set A nor Set B produces a field called `id` — they each produce only `src`' and repeats this in Issue #3, directly and accurately conveying the expected fact."
+          },
+          {
+            "fact": "Either change matching field to src or add an id field upstream",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states both solutions ('Change propertyName1 and propertyName2 to \"src\" (the field that actually exists), or Add an id field in both Set A and Set B') and includes them in the summary table, directly matching the expected fact."
+          }
+        ],
+        "supported": 3,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 3,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 0,
+        "urls_valid": 0,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "**What it does**\nFans out from a Manual Trigger into two Set nodes, then attempts to merge them by a shared key field before outputting the result.\n\n---\n\n**Issues found**\n\n### 1. Manual Trigger has only one output — it cannot fan out to two branches\n\n- **Problem:** The connections object routes Manual Trigger's `main[0]` to Set A and `main[1]` to Set B. The Manual Trigger node has exactly **one output port** (index 0). Output index 1 does not exist on this node.\n- **Node:** `Manual Trigger`\n- **Why it breaks:** n8n connection indices map to a node's physical output ports. A Manual Trigger has a single output (`main[0]`). Wiring `main[1]` to Set B means Set B **never receives any data** — it simply never executes. Because Set B produces nothing, Merge input 1 is empty, and the Merge node either stalls waiting or outputs nothing.\n- **Fix:** Use a single connection from Manual Trigger → Set A, then connect Set A's output to **both** Set A's downstream path **and** Set B. Alternatively, add a **No Operation** pass-through or duplicate the trigger path correctly. The canonical pattern is:\n  - Manual Trigger `main[0]` → Set A\n  - Manual Trigger `main[0]` → Set B\n  Both wires come from the **same** output port (index 0). In the JSON that means both entries belong inside the same `main[0]` array:\n\n```json\n\"Manual Trigger\": {\n  \"main\": [\n    [\n      { \"node\": \"Set A\", \"type\": \"main\", \"index\": 0 },\n      { \"node\": \"Set B\", \"type\": \"main\", \"index\": 0 }\n    ]\n  ]\n}\n```\n\n---\n\n### 2. Merge key field `id` does not exist on either item\n\n- **Problem:** The Merge node is configured with `combinationMode: mergeByKey`, `propertyName1: \"id\"`, `propertyName2: \"id\"`. Neither Set A nor Set B produces a field called `id` — they each produce only `src`.\n- **Node:** `Merge`\n- **Why it breaks:** When merging by key, n8n looks up the specified property on each item to find matching pairs. If the key field is absent on all items, no pairs are matched and the node outputs nothing (or only unmatched rows depending on the join type).\n- **Fix:** Either:\n  - Change `propertyName1` and `propertyName2` to `\"src\"` (the field that actually exists), **or**\n  - Add an `id` field in both Set A and Set B (e.g. `name: \"id\"`, `value: \"1\"`).\n\n---\n\n### 3. Merging by key on items that are structurally identical is likely the wrong mode\n\n- **Problem:** Both Set A and Set B produce a single item with only a `src` field (`\"a\"` and `\"b\"` respectively). Merging by key is designed to **join** two datasets that share a common identifier (like a database join). With no shared key and no overlapping data, the result will always be empty or a single unmatched row.\n- **Node:** `Merge`\n- **Fix:** If the intent is simply to collect both items into one list, change `mode` to `\"append\"`. If the intent is to combine the two fields into one item (`src_a` + `src_b`), use `combinationMode: \"mergeByPosition\"` (combine by position, index 0 from each input merged together).\n\n---\n\n**Summary of exact JSON changes needed**\n\n| Parameter | Current value | Correct value |\n|---|---|---|\n| `Manual Trigger` connections | Two separate `main` arrays `[0]` and `[1]` | Both targets in a single `main[0]` array |\n| `Merge.parameters.propertyName1` | `\"id\"` | `\"src\"` (or add `id` to Set nodes) |\n| `Merge.parameters.propertyName2` | `\"id\"` | `\"src\"` (or add `id` to Set nodes) |\n| `Merge.parameters.mode` | `\"combine\"` / `\"mergeByKey\"` | `\"append\"` if you just want both items; `\"mergeByPosition\"` if you want one merged item |",
+      "nodes": 4,
+      "build": "f85d6ef",
+      "latency_ms": 24595
+    },
+    {
+      "id": "dbg-02-loop-infinite",
+      "query": "This loop never ends. Debug: {\"nodes\":[{\"name\":\"Schedule Trigger\",\"type\":\"n8n-nodes-base.scheduleTri",
+      "http_mode": "debug",
+      "mode": {
+        "expected": "debug",
+        "observed": "debug",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 0,
+        "mrr_at_5": 0,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__splitinbatches",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__splitinbatches",
+          "docs__integrations__builtin__trigger-nodes__n8n-nodes-base__telegramtrigger__common-issues",
+          "docs__code__cookbook__code-node__console-log",
+          "docs__integrations__builtin__trigger-nodes__n8n-nodes-base__googlesheetstrigger__common-issues",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__debughelper"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "Pagination Complete When set to status code 404 means the loop only stops on 404",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that 'paginationCompleteWhen: receiveSpecificStatusCodes with statusCodesWhenComplete: \"404\" means n8n only stops paginating if the API returns an HTTP 404,' which directly and accurately conveys the expected fact."
+          },
+          {
+            "fact": "If the API returns 200 with empty data, the loop continues forever",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states in the first bullet point that 'Many APIs signal \"no more pages\" by returning a 200 with an empty array' and that 'If your API does this, the paginator never sees a 404, keeps incrementing $pageNumber, and runs indefinitely,' which directly conveys the expected fact."
+          },
+          {
+            "fact": "Change Complete When to Response Is Empty or Other with an expression on response body length",
+            "verdict": "partial",
+            "passes": [
+              "partial",
+              "partial",
+              "partial"
+            ],
+            "rationale": "The answer correctly identifies that the pagination termination condition is unreliable and suggests using `responseContainsField` as an alternative, but does not specifically mention using an expression on response body length or the 'Response Is Empty' option that the expected fact references."
+          }
+        ],
+        "supported": 2,
+        "partial": 1,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 3,
+        "rate": 0.8333333333333334
+      },
+      "citation": {
+        "urls_found": 2,
+        "urls_valid": 2,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "**What it does**\nPolls an API every 5 minutes and attempts to paginate through all pages by incrementing a `page` query parameter, stopping when it receives a 404.\n\n---\n\n**Issues found**\n\n- **Termination condition is unreliable — the loop may never end**\n  - **Node:** HTTP Request (pagination options)\n  - **Problem:** `paginationCompleteWhen: receiveSpecificStatusCodes` with `statusCodesWhenComplete: \"404\"` means n8n only stops paginating if the API returns an HTTP 404. Many APIs signal \"no more pages\" by returning a 200 with an empty array, a `hasMore: false` flag, or a `nextPage: null` field — not a 404. If your API does this, the paginator never sees a 404, keeps incrementing `$pageNumber`, and runs indefinitely.\n  - **Fix:** Change `paginationCompleteWhen` to one of the semantically correct options for your API:\n    - `\"responseContainsField\"` — stop when a field like `hasMore` equals `false`\n    - `\"receiveSpecificStatusCodes\"` — only valid if the API *actually* returns 404 (not 200+empty) at the last page\n    - If the API returns an empty `items` array on the last page, use `\"responseContainsField\"` and point it at `items` being empty, or switch to a manual Loop Over Items + IF node pattern [Loop Over Items (Split in Batches)](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitinbatches/)\n\n- **HTTP 404 treated as a success signal, not an error**\n  - **Node:** HTTP Request\n  - **Problem:** By default the HTTP Request node throws an error on 4xx responses. Using 404 as the stop signal means either (a) the node errors out before pagination logic can catch it, or (b) you've enabled \"Continue On Fail\" — in which case error items silently flow downstream instead of clean data.\n  - **Fix:** If you truly need 404 as the stop signal, enable **\"Continue On Fail\"** on the HTTP Request node AND add a Filter node immediately after to drop items where `$json.error` is set. Better: redesign so the stop condition is a 200-with-empty-body check.\n\n- **No hard upper bound on page count**\n  - **Node:** HTTP Request (pagination options)\n  - **Problem:** There is no `maxRequests` cap configured. If the stop condition is never met (e.g., the API keeps returning 200), the node will paginate forever, consuming memory and execution time.\n  - **Fix:** Set the **Max Requests** pagination option to a safe ceiling (e.g., `100`). This acts as a safety valve regardless of what the API returns.\n\n- **Missing error handler**\n  - **Node:** Workflow-level\n  - **Problem:** There is no Error Trigger workflow attached. If the HTTP Request node fails mid-pagination (network timeout, auth error, etc.), the failure is silent — the Schedule Trigger will just fire again in 5 minutes with no alerting.\n  - **Fix:** Create a separate error-handler workflow using the **Error Trigger** node and link it in **Workflow Settings → Error Workflow**.\n\n---\n\n**Summary of exact parameter changes needed in the HTTP Request node**\n\n```\npaginationCompleteWhen  → \"responseContainsField\"   (or a condition matching your API's real EOF signal)\nstatusCodesWhenComplete → remove / leave blank\nmaxRequests             → 100   (add this field under pagination options)\n```\n\nIf your API genuinely has no reliable EOF signal and you need fine-grained control, replace the built-in pagination entirely with a **Loop Over Items** node + **IF** node exit condition, which gives you explicit termination logic [Loop Over Items (Split in Batches)](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitinbatches/).",
+      "nodes": 2,
+      "build": "f85d6ef",
+      "latency_ms": 23510
+    },
+    {
+      "id": "dbg-03-webhook-no-response",
+      "query": "My webhook returns 'Workflow was started' instead of my data: {\"nodes\":[{\"name\":\"Webhook\",\"type\":\"n8",
+      "http_mode": "debug",
+      "mode": {
+        "expected": "debug",
+        "observed": "debug",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 0.75,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__webhook__index",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__webhook__index",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__respondtowebhook",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__webhook__common-issues",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__webhook__workflow-development",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-langchain__chattrigger__common-issues"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "The webhook Respond setting defaults to Immediately which returns Workflow was started",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that the Webhook node's Respond parameter defaults to 'Immediately' and that this causes n8n to send back 'Workflow got started' before the Set node runs, which directly matches the expected fact."
+          },
+          {
+            "fact": "Change Respond to When Last Node Finishes to return the Set node output",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly identifies the Respond parameter default as 'Immediately', explains it returns 'Workflow got started' before the Set node runs, and prescribes changing it to 'When Last Node Finishes' to return the Set node output—directly matching the expected fact."
+          },
+          {
+            "fact": "Or use Respond to Webhook node for full control",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly recommends using the 'Respond to Webhook' node as an alternative for full control over the response, including custom status codes, headers, and body shape."
+          }
+        ],
+        "supported": 3,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 3,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 7,
+        "urls_valid": 7,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "**What it does**\nReceives a POST request at `/hello`, sets a `greeting` field to `\"hi\"`, and is expected to return that data to the caller — but doesn't.\n\n---\n\n**Issues found**\n\n- **Problem:** The Webhook node's `Respond` parameter is not set (defaults to `Immediately`), which means n8n sends back the static message `\"Workflow got started\"` the moment the webhook fires, before the Set node ever runs.\n- **Node:** `Webhook`\n- **Why it breaks:** The `Immediately` mode returns the response code and the message **\"Workflow got started\"** right away, with no workflow output data included [Webhook node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/). Your Set node runs, but its output is never sent back to the caller.\n- **Fix:** In the Webhook node, change the `Respond` parameter to **`When Last Node Finishes`**. This makes n8n wait until the Set node completes and then return its output as the response body [Webhook node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/).\n\n  Optionally, also set **Response Data** to `First Entry JSON` if you want the clean JSON object `{\"greeting\": \"hi\"}` rather than an array [Webhook node documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/).\n\n  If you need more control over the response format (custom status codes, headers, or body shape), instead set `Respond` to **`Using 'Respond to Webhook' Node`** and add a **Respond to Webhook** node at the end of the chain, configured with `Respond With: First Incoming Item` [Respond to Webhook](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.respondtowebhook/).\n\n---\n\n**If no obvious issues (runtime checklist)**\n\nOnce the `Respond` mode is fixed, verify:\n\n1. **Test vs. Production URL** — during development use the Test URL and click **Listen for Test Event** first; it only stays active for 120 seconds [Webhook node workflow development documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/workflow-development/).\n2. **Workflow is saved and published** before using the Production URL [Webhook node workflow development documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/workflow-development/).\n3. **Path conflicts** — n8n only allows one webhook per path + method combination; if `/hello` POST is already registered in another workflow you'll get a conflict error [Webhook node common issues](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/common-issues/).",
+      "nodes": 2,
+      "build": "f85d6ef",
+      "latency_ms": 13936
+    },
+    {
+      "id": "dbg-04-if-misroute",
+      "query": "My IF node routes everything to the false branch even when the value matches. Workflow: {\"nodes\":[{\"",
+      "http_mode": "debug",
+      "mode": {
+        "expected": "debug",
+        "observed": "debug",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 1,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__if",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__if",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__switch",
+          "docs__code__cookbook__builtin__all",
+          "docs__workflows__components__nodes",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__filter"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "count is set as a string '5' in Edit Fields, not a number",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states 'The `values.string` array stores `\"5\"` as a string literal' and 'count is a string, not a number', directly and accurately conveying the expected fact."
+          },
+          {
+            "fact": "Number comparison on a string value fails the type check",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly identifies and explains that the string value '5' fails the number type check in the IF node's comparison operation, directly matching the expected fact."
+          },
+          {
+            "fact": "Either set count as a number in Edit Fields or cast in the IF expression: ={{ Number($json.count) }}",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly presents both solutions (set count as a number in Edit Fields via Option A, or cast with Number() in the IF expression via Option B) and accurately explains why the type mismatch causes the false branch routing."
+          }
+        ],
+        "supported": 3,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 3,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 3,
+        "urls_valid": 3,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "**What it does**\nSets a field called `count` to the string `\"5\"`, then tries to compare it numerically against `3` in an IF node.\n\n---\n\n**Issues found**\n\n- **Type mismatch: `count` is a string, not a number**\n  - **Node:** `Edit Fields`\n  - **Why it breaks:** The `values.string` array stores `\"5\"` as a string literal. When the IF node evaluates the `number` condition `larger`, it receives the string `\"5\"` for `value1`. n8n's strict type validation does not silently coerce a string to a number in this context, so the comparison fails and the item falls through to the **false** branch every time [Filter](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filter/).\n  - **Fix — Option A (fix the Set node):** Change the field type from `string` to `number` in the `Edit Fields` node. In the UI, switch the type dropdown for the `count` field from **String** to **Number** and enter `5` (no quotes). In JSON this means moving the entry from `values.string` to `values.number`:\n    ```json\n    \"values\": {\n      \"number\": [\n        { \"name\": \"count\", \"value\": 5 }\n      ]\n    }\n    ```\n  - **Fix — Option B (cast in the IF expression):** Keep the Set node as-is but wrap the expression in `Number()` in the IF condition:\n    ```\n    ={{ Number($json.count) }}\n    ```\n    This explicitly converts the string to a number before the comparison runs.\n  - **Fix — Option C (enable Less Strict Type Validation):** If you are on a version of n8n that exposes the **Less Strict Type Validation** option on the IF node, turning it on tells n8n to attempt type coercion automatically [Filter](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filter/). Option A or B is more explicit and reliable.\n\n---\n\n**Nothing else is structurally wrong.** The connections are correct, the expression `={{ $json.count }}` references the right field, and the `larger` operation is valid for a number condition [If](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.if/). Fix the type mismatch and the true branch will fire as expected.",
+      "nodes": 3,
+      "build": "f85d6ef",
+      "latency_ms": 15389
+    },
+    {
+      "id": "dbg-05-code-syntax",
+      "query": "Code node throws an error. Help: {\"nodes\":[{\"name\":\"Manual Trigger\",\"type\":\"n8n-nodes-base.manualTri",
+      "http_mode": "debug",
+      "mode": {
+        "expected": "debug",
+        "observed": "debug",
+        "correct": true
+      },
+      "retrieval": {
+        "recall_at_5": 1,
+        "mrr_at_5": 0.25,
+        "top_doc_id": "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__common-issues",
+        "retrieved_doc_ids": [
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__common-issues",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__debughelper",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__stopanderror",
+          "docs__integrations__builtin__core-nodes__n8n-nodes-base__code__index",
+          "docs__code__cookbook__code-node__console-log"
+        ]
+      },
+      "faithfulness": {
+        "judgements": [
+          {
+            "fact": "The variable items is being declared and used in the same line (self-reference)",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly identifies and explains the self-reference issue in the 'Shadowed variable' section, correctly describing how `const items = items.map(...)` causes a ReferenceError due to reading `items` before its initialization."
+          },
+          {
+            "fact": "Use $input.all() to read incoming items in the Code node",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The answer explicitly states that input is accessed via `$input.all()` in the Code node and provides the corrected code using this method as the primary fix."
+          },
+          {
+            "fact": "Correct: const result = $input.all().map(i => ({ json: { doubled: i.json.n * 2 } })); return result;",
+            "verdict": "supported",
+            "passes": [
+              "supported",
+              "supported",
+              "supported"
+            ],
+            "rationale": "The candidate answer correctly identifies that `$input.all()` must be used to access input items and provides the exact corrected code pattern matching the expected fact."
+          }
+        ],
+        "supported": 3,
+        "partial": 0,
+        "unsupported": 0,
+        "contradicted": 0,
+        "total": 3,
+        "rate": 1
+      },
+      "citation": {
+        "urls_found": 2,
+        "urls_valid": 2,
+        "validity_rate": 1
+      },
+      "refused": null,
+      "answer": "**What it does**\nTriggers manually, then doubles a numeric field `n` on each incoming item and returns the result.\n\n---\n\n**Issues found**\n\n- **Wrong variable name for input items in the Code node (`Code` node)**\n\n  The code references `items` directly:\n  ```js\n  const items = items.map(...)\n  ```\n  In n8n's Code node (default mode: *Run Once for All Items*), the input is accessed via `$input.all()`, **not** a bare `items` variable. Using `items` is undefined in this context and will throw a `ReferenceError` [Code node common issues](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.code/common-issues/).\n\n  **Exact fix:**\n  ```js\n  const items = $input.all();\n  return items.map(i => ({ json: { doubled: i.json.n * 2 } }));\n  ```\n\n- **Shadowed variable (`const items = items...`)**\n\n  Even if `items` were somehow in scope, writing `const items = items.map(...)` shadows itself — the right-hand `items` is read before the `const` binding is initialized, causing a `ReferenceError: Cannot access 'items' before initialization`. Splitting the read and the assignment (as shown above) eliminates this entirely [Code node common issues](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.code/common-issues/).\n\n- **No guard against missing `n` field**\n\n  If any incoming item lacks the `n` field, `i.json.n * 2` evaluates to `NaN` silently, or throws if `i.json` itself is undefined. The Manual Trigger produces **zero items** by default (no test data), so the `.map()` will run over an empty array and return nothing useful.\n\n  **Fix — add a fallback and test with pinned data:**\n  ```js\n  const items = $input.all();\n  return items.map(i => ({\n    json: { doubled: (i.json.n ?? 0) * 2 }\n  }));\n  ```\n  Pin test data on the Manual Trigger node (e.g. `[{ \"json\": { \"n\": 5 } }]`) so the Code node actually receives items to process.\n\n---\n\n**Runtime checks to verify after fixing**\n\n- Confirm the Manual Trigger has pinned data with an `n` field, otherwise the output will always be an empty array.\n- No credentials are involved here, so no credential issues to worry about.\n- No rate limits apply to this workflow.",
+      "nodes": 2,
+      "build": "f85d6ef",
+      "latency_ms": 14674
+    },
+    {
+      "id": "rdr-01-weather",
+      "query": "What's the weather like in Budapest tomorrow?",
+      "http_mode": "redirect",
+      "mode": {
+        "expected": "redirect",
+        "observed": "redirect",
+        "correct": true
+      },
+      "retrieval": null,
+      "faithfulness": null,
+      "citation": null,
+      "refused": true,
+      "answer": "I'm not able to help with weather forecasts, but I'd love to assist you with n8n nodes, expressions, workflow design, or debugging your workflows!",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 3363
+    },
+    {
+      "id": "rdr-02-forex",
+      "query": "What's the EUR to USD exchange rate right now?",
+      "http_mode": "redirect",
+      "mode": {
+        "expected": "redirect",
+        "observed": "redirect",
+        "correct": true
+      },
+      "retrieval": null,
+      "faithfulness": null,
+      "citation": null,
+      "refused": true,
+      "answer": "I'm not able to provide exchange rates, but I'd love to help you with n8n workflows, nodes, expressions, or any automation questions you have!",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 3244
+    },
+    {
+      "id": "rdr-03-generic-python",
+      "query": "How do I read a CSV file in Python?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "redirect",
+        "observed": "answer",
+        "correct": false
+      },
+      "retrieval": null,
+      "faithfulness": null,
+      "citation": null,
+      "refused": false,
+      "answer": "That's outside the n8n world, so I'll skip the Python-specific answer.\n\n**Inside n8n, here's how to read and process a CSV file:**\n\n## Option 1: Extract From File node (most common)\n\n1. Get the file into your workflow as binary data — via an **HTTP Request** node (fetching a URL) or a **Webhook** node (receiving an upload) [Extract From File](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.extractfromfile/)\n2. Add an **Extract From File** node after it\n3. Set **Operation** → **Extract From CSV**\n4. Set **Input Binary Field** to the field name holding the binary data (default: `data`) [Extract From File](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.extractfromfile/)\n\nThe node outputs each row as a JSON object you can work with in the rest of your workflow.\n\n> **Tip:** If you're receiving the file via Webhook, click **Add Options** → **Raw body** and enable it so the binary file is passed through correctly. [Extract From File](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.extractfromfile/)\n\n## Option 2: Read from disk (self-hosted only)\n\nUse the **Read/Write Files from Disk** node with the **Read File(s) From Disk** operation, pointing to the file path on the server. Then pipe the output into **Extract From File** → **Extract From CSV**. [Read/Write Files from Disk](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.readwritefile/)\n\n> Note: This node is not available on n8n Cloud. [Read/Write Files from Disk](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.readwritefile/)\n\n## After extraction\n\nThe CSV rows come out as JSON items like:\n```json\n{ \"row\": { \"0\": \"apple\", \"1\": \"1\" } }\n```\nYou can then use **Set**, **Code**, or other nodes to transform that data. [Extract From File](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.extractfromfile/)",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 11538
+    },
+    {
+      "id": "rdr-04-zapier-compare",
+      "query": "Should I use Zapier or Make.com instead of n8n?",
+      "http_mode": "answer",
+      "mode": {
+        "expected": "redirect",
+        "observed": "answer",
+        "correct": false
+      },
+      "retrieval": null,
+      "faithfulness": null,
+      "citation": null,
+      "refused": false,
+      "answer": "That's outside what I can help with — my role is to coach you on n8n specifically, and I don't evaluate or compare other automation platforms.\n\nWhat I *can* help you with:\n\n- **Understanding what n8n can do** — nodes, integrations, AI agents, webhooks, scheduling, etc.\n- **Designing a workflow** for your specific use case\n- **Debugging** an existing n8n workflow\n- **Choosing the right n8n nodes** for a task\n\nTell me what you're trying to automate, and I'll show you how to build it in n8n.",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 6115
+    },
+    {
+      "id": "rdr-05-recipe",
+      "query": "Give me a recipe for chicken paprikash.",
+      "http_mode": "redirect",
+      "mode": {
+        "expected": "redirect",
+        "observed": "redirect",
+        "correct": true
+      },
+      "retrieval": null,
+      "faithfulness": null,
+      "citation": null,
+      "refused": true,
+      "answer": "I'm not able to help with recipes, but I'd love to assist you with n8n workflows, nodes, expressions, or debugging!",
+      "nodes": 0,
+      "build": "f85d6ef",
+      "latency_ms": 3087
+    }
+  ]
+}
