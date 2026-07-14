@@ -31,6 +31,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/turndown": "^5.0.6",
+    "cheerio": "^1.2.0",
     "chrome-launcher": "^1.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
@@ -38,6 +40,7 @@
     "lighthouse": "^13.3.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
+    "turndown": "^7.2.4",
     "typescript": "^5"
   }
 }

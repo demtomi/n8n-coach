@@ -82,13 +82,24 @@ async function main() {
   // Deletion is gated behind --prune and always prints what it will remove first. The
   // content is reproducible from corpus.json and the vectors cost cents to regenerate, so
   // this is recoverable — but it is still a destructive write to a shared production DB.
-  const { data: existing, error: readErr } = await supabase
-    .from("coach_documents")
-    .select("id, content")
-    .not("embedding", "is", null);
-  if (readErr) throw new Error(`could not read existing rows: ${readErr.message}`);
-
-  const have = new Map((existing ?? []).map((r) => [r.id as string, r.content as string]));
+  // PAGINATE. PostgREST caps a select at 1,000 rows, silently. An unpaginated read of a
+  // 1,217-row table returns 1,000 of them and reports the other 217 as absent: they get
+  // re-embedded for nothing, and — the part that actually bites — a STALE row sitting past
+  // the cutoff is invisible to the prune and stays retrievable forever. The truncation looks
+  // exactly like a smaller table.
+  const PAGE = 1000;
+  const have = new Map<string, string>();
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from("coach_documents")
+      .select("id, content")
+      .not("embedding", "is", null)
+      .order("id")
+      .range(from, from + PAGE - 1);
+    if (error) throw new Error(`could not read existing rows: ${error.message}`);
+    for (const r of data ?? []) have.set(r.id as string, r.content as string);
+    if (!data || data.length < PAGE) break;
+  }
   const wanted = new Set(entries.map((e) => e.id));
 
   const todo = entries.filter((e) => have.get(e.id) !== e.content);
